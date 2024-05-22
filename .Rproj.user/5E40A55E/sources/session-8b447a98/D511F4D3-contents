@@ -1,0 +1,148 @@
+library(genodds)
+threshold <- -1*qnorm(2.5*10^(-8))
+###Start by assuming that true relationship is dominant, recessive or co-dominant
+###The question is what power do we lose by using the additive model rather than the true model
+###We will start with just using the GWAS bonferonni 5e-08
+
+#n <- c(1000, 2000, 3000, 4000, 5000, 10000, 15000, 20000, 50000)
+OR <- c(1.1,1.25,1.5,1.75,2,2.5,3)
+pheno_prob <- c(.05,.1,.2,.3,.4,.5,.6,.7,.8,.9) ##Probability of having the phenotype GIVEN you have the right allele freq
+pi.prob <- c(.05,.1,.2,.3,.4,.5,.6,.7,.8,.9)
+Results <- expand.grid(OR=OR,pheno_prob=pheno_prob,pi.prob=pi.prob,pwr=c(0.5,0.8,0.9,0.99))
+Results$n <- 0
+Results$power1 <- 0
+Results$power2 <- 0
+Results$power3 <- 0
+Results$skipstatus_i <- 0
+Results$skipstatus_j <- 0
+###This is naive but for now assume that pi=.5 where p(0) = (1-pi)^2, p(1)=2pi(1-pi), p(2)=pi^2
+##ALTERNATIVELY
+##Calculate sample size for a certain power
+# genodds.power(c(.5,.5),c(.3333,.6667),power=0.5,alpha=2.5*10^(-8),w=c(.25,.75)) ##1423
+# genodds.power(c(.5,.5),c(.3333,.6667),power=0.8,alpha=2.5*10^(-8),w=c(.25,.75)) ##1899
+# genodds.power(c(.5,.5),c(.3333,.6667),power=0.9,alpha=2.5*10^(-8),w=c(.25,.75)) ##n=2175
+# genodds.power(c(.5,.5),c(.3333,.6667),power=0.99,alpha=2.5*10^(-8),w=c(.25,.75)) ##n=2906
+
+##Start loop
+for (j in 1:nrow(Results)){
+
+
+  ##COMMENT OUT WHEN LOOP IS BUILT
+  pi.prob <- Results$pi.prob[j]
+  OR <- Results$OR[j]
+  pheno_prob <- Results$pheno_prob[j]
+  pwr <- Results$pwr[j]
+  pheno.odds <- pheno_prob/(1-pheno_prob)
+  pheno_prob0 <- 1/(OR/pheno.odds+1)
+  w <- c((1-pi.prob)^2,2*pi.prob*(1-pi.prob),pi.prob^2)
+  ##n will be set by the genodds power calculation
+  n<-genodds.power(c(pheno_prob0,1-pheno_prob0),c(pheno_prob,1-pheno_prob),power=pwr,alpha=5*10^(-8),w=c(w[1],w[2]+w[3]))
+  if(n>10000000){Results$skipstatus_j[j] <- 1
+  next}
+
+  ##Start with a single scenario
+  M<-1000
+  correct_res <- 0
+  add_res <- 0
+  rec_res <- 0
+  #Res <- data.frame(i=seq(M),correct_res=0,correct_TS=0, add_res=0, add_TS=0)
+  ########################
+
+  for(i in 1:M){
+    X <- rmultinom(1,n,w)
+    n11 <- rbinom(1,X[2,],pheno_prob)
+    n12 <- X[2,] - n11
+    n21 <- rbinom(1,X[3,],pheno_prob)
+    n22 <- X[3,] - n21
+    n01 <- rbinom(1,X[1,],pheno_prob0)
+    n02 <- X[1,] - n01
+    if(min(n11,n12,n21,n22,n01,n02)==0){Results$skipstatus_i[j]<-1
+      next}
+
+    ##Do test using correct assumption:
+    log_OR_actual <- log(n11+n21) + log(n02) - log(n12+n22) -log(n01)
+    sd_logodds <- sqrt(1/(n11+n21) + 1/(n12+n22) + 1/n02 + 1/n01)
+    #log_OR_actual/sd_logodds
+    #Res$correct_TS[i] <- log_OR_actual/sd_logodds
+    if(abs(log_OR_actual/sd_logodds)>threshold){correct_res<-correct_res+1}
+
+    ##Do test with additive model
+    df <- data.frame(X=c(0,1,2),Y0=c(n01, n11, n21), Y1=c(n02,n12, n22))
+    mod <- glm(cbind(Y1, Y0) ~ X, family = binomial, data = df)
+    tst<-summary(mod)
+    if(abs(tst$coefficients[2,1]/tst$coefficients[2,2])>threshold){add_res<-add_res+1}
+    #if(i%%50==0){print(i)}
+
+    ##Do test using recessive model:
+    log_OR_actual <- log(n01+n11) + log(n22) - log(n02+n12) -log(n21)
+    sd_logodds <- sqrt(1/(n01+n11) + 1/(n02+n12) + 1/n22 + 1/n21)
+    #log_OR_actual/sd_logodds
+    #Res$correct_TS[i] <- log_OR_actual/sd_logodds
+    if(abs(log_OR_actual/sd_logodds)>threshold){rec_res<-rec_res+1}
+  }
+  Results$n[j] <- n
+  Results$power1[j] <- sum(correct_res)/M ##power1
+  Results$power2[j] <- sum(add_res)/M ##power2
+  Results$power3[j] <- sum(rec_res)/M ##power3
+  if(j%%50==0){print(j/nrow(Results))}
+  #if(Results$skipstatus[j]==1){print(paste0("OOPSIE TOODLES",j))}
+}
+
+###Ad-hoc testing
+sum(correct_res)/M ##power1
+sum(add_res)/M ##power2
+sum(rec_res)/M ##power3
+####End
+
+setwd("C:\\Users\\Jackson_Barth\\Box\\Research\\Genomics Core\\Genetics Problem")
+write.csv(Results,"type2_sim_rec.csv")
+##All of these have roughly 3% MOE for a 95% interval
+###At n=1423 power1 ~ 41.4%, power2 ~ 15.2%
+###At n=1900 power1 ~ 75%, power2 ~ 36%
+###At n=2175 power1 ~ 88.1%, power2 ~ 52.2%
+###At n=2906 power1 ~ 99.2%, power2 ~ 83.5%
+
+
+###power calculation
+###1) find rejection region
+n <- 70
+se <- sqrt(sum(1/(n*c(.25,.25,.3,.2))))
+
+1-pnorm(qnorm(.975,0,se),1.5,se)
+
+##sample size calculator:
+get_n <- function(alpha,beta,pi1,pi2,pi3,pi4,OR){
+  ((qnorm(1-alpha/2)+qnorm(1-beta))*sqrt(sum(1/(c(pi1,pi2,pi3,pi4))))/log(OR))^2
+}
+((qnorm(.975)+qnorm(.8))*sqrt(sum(1/(c(.25,.25,.3,.2))))/1.5)^2
+
+get_n(2.5*10^(-8),.2,pheno_prob0*w[1],(1-pheno_prob0)*w[1],pheno_prob*(w[2]+w[3]),(1-pheno_prob)*(w[2]+w[3]),OR)
+###Once I fixed the bug the genodds.power is working properly
+
+
+
+
+### Comp time
+library(rbenchmark)
+
+f1<-function(){log_OR_actual <- log(n11+n21) + log(n02) - log(n12+n22) -log(n01)
+sd_logodds <- sqrt(1/(n11+n21) + 1/(n12+n22) + 1/n02 + 1/n01)
+#log_OR_actual/sd_logodds
+#Res$correct_TS[i] <- log_OR_actual/sd_logodds
+if(abs(log_OR_actual/sd_logodds)>threshold){correct_res<-correct_res+1}}
+
+f2 <- function(){Xd <- rep(c(0,1,2),X[,1])
+Y <- rep(c(1,0,1,0,1,0),c(n01,n02,n11,n12,n21,n22))
+tst<-summary(glm(Y~Xd,family="binomial"(link="logit")))
+#Res$add_TS[i] <- tst$coefficients[2,1]/tst$coefficients[2,2]
+if(abs(tst$coefficients[2,1]/tst$coefficients[2,2])>threshold){add_res<-add_res+1}}
+
+f3 <- function(){
+  df <- data.frame(X=c(0,1,2),Y0=c(n01, n11, n21), Y1=c(n02,n12, n22))
+mod <- glm(cbind(Y1, Y0) ~ X, family = binomial, data = df)
+tst<-summary(mod)
+#Res$add_TS[i] <- tst$coefficients[2,1]/tst$coefficients[2,2]
+if(abs(tst$coefficients[2,1]/tst$coefficients[2,2])>threshold){add_res<-add_res+1}}
+
+benchmark(f1(), f2(), f3(), replications=100)
+

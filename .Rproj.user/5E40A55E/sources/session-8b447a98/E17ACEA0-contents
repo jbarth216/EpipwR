@@ -1,0 +1,16 @@
+##Paper figures
+
+get_power(dm=100, ## Number of significant cpg sites
+          Total=100000, ##Total number of tested sites
+          n=c(50,100,150,200,250,300,350,400,450,500), ##Sample sizes to be tested (this is the only parameter that can take multiple inputs)
+          fdr=.05, ##false discovery rate - currently, the only adjustment you can do is the benjamini-Hochberg
+          rho_mu=c(.2,.25,.3), ##mean of the rho distribution
+          rho_sd=0, ##sd of the rho distribution (if 0, this means that all correlations are rho_mu)
+          MOE=.03, ##Target margin of error of a 95% confidence interval for the average power across all tested datasets
+          Nmax=1000, ##The maximum number of datasets tested (for each individual sample size)
+          test="pearson", ##What type of test. Can be pearson, kendall or spearman
+          use_fdr=T,
+          Suppress_updates = F
+) -> sample_results
+
+sample_results

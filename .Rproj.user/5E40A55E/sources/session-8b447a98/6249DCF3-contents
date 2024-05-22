@@ -1,0 +1,19 @@
+library(ggplot2)
+EpipwR_plot<-function(df){
+  df$moe_min <- df$avg_power - 1.96*df$se_power
+  df$moe_max <- df$avg_power + 1.96*df$se_power
+  ggplot(df, aes(x = sample_size, y = avg_power, color = as.character(rho_mu))) +
+    geom_line(linewidth = 1.25) +
+    geom_point(size = 2.5) +
+    geom_errorbar(aes(ymin = moe_min, ymax = moe_max), linewidth = 1.25) +
+    geom_hline(yintercept=0.8, linetype="dashed", color = "black") +
+    geom_hline(yintercept=0.9, linetype="dashed", color = "black") +
+    labs(title = "Mean power curve(s) with 95% confidence intervals",
+         x = "Sample size",
+         y = "Power",
+         color=expression(rho[mu])) +
+    # theme_bw() +
+    ylim(0,1) +
+    theme(text=element_text(size=18))
+}
+

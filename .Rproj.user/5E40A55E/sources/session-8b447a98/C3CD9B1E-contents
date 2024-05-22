@@ -1,0 +1,219 @@
+library(ExperimentHub)
+
+#pwrEWAS.data
+
+loadDataset <- function(tissueType){
+  hub <- ExperimentHub::ExperimentHub()
+  methPara <- switch(tissueType,
+                     "Saliva" = hub[["EH3068"]],
+                     "Lymphoma" = hub[["EH3069"]],
+                     "Placenta" = hub[["EH3070"]],
+                     "Liver" = hub[["EH3071"]],
+                     "Colon" = hub[["EH3072"]],
+                     "Blood adult" = hub[["EH3073"]],
+                     "Blood 5 year olds" = hub[["EH3074"]],
+                     "Blood newborns" = hub[["EH3075"]],
+                     "Cord-blood (whole blood)" = hub[["EH3076"]],
+                     "Cord-blood (PBMC)" = hub[["EH3077"]],
+                     "Adult (PBMC)" = hub[["EH3078"]],
+                     "Sperm" = hub[["EH3079"]],
+                     stop("Tissue type not found")
+  )
+  return(methPara)
+}
+
+get_ab <- Vectorize(function(mu, var){
+  a <- mu^2*(1-mu)/var - mu
+  b <- a*(1-mu)/mu
+  c(a,b)
+}, vectorize.args = c("mu","var"))
+
+skew <- function(a,b){2*(b-a)*sqrt(a+b+1)/((a+b+2)*sqrt(a*b))}
+
+get_percent <- Vectorize(function(dat, q){
+  length(dat[dat<q])/length(dat)
+},vectorize.args = "q")
+
+d1 <- loadDataset("Saliva")
+
+d1_ab <- matrix(get_ab(d1$mu,d1$var),nrow(d1),2,byrow=T)
+d1_ab_skew <- abs(skew(d1_ab[,1],d1_ab[,2]))
+
+1-get_percent(d1_ab_skew,c(1,2,3))
+
+d2 <- loadDataset("Lymphoma")
+d2_ab <- matrix(get_ab(d2$mu,d2$var),nrow(d2),2,byrow=T)
+d2_ab_skew <- abs(skew(d2_ab[,1],d2_ab[,2]))
+
+1-get_percent(d2_ab_skew,c(1,2,3))
+
+d3 <- loadDataset("Placenta")
+d3_ab <- matrix(get_ab(d3$mu,d3$var),nrow(d3),2,byrow=T)
+d3_ab_skew <- abs(skew(d3_ab[,1],d3_ab[,2]))
+
+1-get_percent(d3_ab_skew,c(1,2,3))
+
+x11()
+plot(density(d1_ab_skew))
+lines(density(d2_ab_skew),col="red")
+lines(density(d3_ab_skew),col="blue")
+lines(density(d4_ab_skew),col="purple")
+
+d4 <- loadDataset("Liver")
+d4_ab <- matrix(get_ab(d4$mu,d4$var),nrow(d4),2,byrow=T)
+d4_ab_skew <- abs(skew(d4_ab[,1],d4_ab[,2]))
+
+1-get_percent(d4_ab_skew,c(1,2,3))
+
+d5 <- loadDataset("Colon")
+d5_ab <- matrix(get_ab(d5$mu,d5$var),nrow(d5),2,byrow=T)
+d5_ab_skew <- abs(skew(d5_ab[,1],d5_ab[,2]))
+
+1-get_percent(d5_ab_skew,c(1,2,3))
+
+
+##Convert to ab and Store package:
+
+loadDataset <- function(tissueType){
+  hub <- ExperimentHub::ExperimentHub()
+  methPara <- switch(tissueType,
+                     "Saliva" = hub[["EH3068"]],
+                     "Lymphoma" = hub[["EH3069"]],
+                     "Placenta" = hub[["EH3070"]],
+                     "Liver" = hub[["EH3071"]],
+                     "Colon" = hub[["EH3072"]],
+                     "Blood adult" = hub[["EH3073"]],
+                     "Blood 5 year olds" = hub[["EH3074"]],
+                     "Blood newborns" = hub[["EH3075"]],
+                     "Cord-blood (whole blood)" = hub[["EH3076"]],
+                     "Cord-blood (PBMC)" = hub[["EH3077"]],
+                     "Adult (PBMC)" = hub[["EH3078"]],
+                     "Sperm" = hub[["EH3079"]],
+                     stop("Tissue type not found")
+  )
+  return(methPara)
+}
+
+get_ab <- Vectorize(function(mu, var){
+  a <- mu^2*(1-mu)/var - mu
+  b <- a*(1-mu)/mu
+  c(a,b)
+}, vectorize.args = c("mu","var"))
+
+setwd("C:\\Users\\Jackson_Barth\\Box\\Research\\Genomics Core\\pwrEWAS\\Datasets")
+
+d1 <- loadDataset("Saliva")
+d1_ab <- matrix(get_ab(d1$mu,d1$var),nrow(d1),2,byrow=T)
+save(d1_ab,file="d1_ab.rdata")
+
+d2 <- loadDataset("Lymphoma")
+d2_ab <- matrix(get_ab(d2$mu,d2$var),nrow(d1),2,byrow=T)
+save(d2_ab,file="d2_ab.rdata")
+
+d3 <- loadDataset("Placenta")
+d3_ab <- matrix(get_ab(d3$mu,d3$var),nrow(d3),2,byrow=T)
+save(d3_ab,file="d3_ab.rdata")
+
+d4 <- loadDataset("Liver")
+d4_ab <- matrix(get_ab(d4$mu,d4$var),nrow(d4),2,byrow=T)
+save(d4_ab,file="d4_ab.rdata")
+
+d5 <- loadDataset("Colon")
+d5_ab <- matrix(get_ab(d5$mu,d5$var),nrow(d5),2,byrow=T)
+save(d5_ab,file="d5_ab.rdata")
+
+d6 <- loadDataset("Blood adult")
+d6_ab <- matrix(get_ab(d6$mu,d6$var),nrow(d6),2,byrow=T)
+save(d6_ab,file="d6_ab.rdata")
+
+d7 <- loadDataset("Blood 5 year olds")
+d7_ab <- matrix(get_ab(d7$mu,d7$var),nrow(d7),2,byrow=T)
+save(d7_ab,file="d7_ab.rdata")
+
+d8 <- loadDataset("Blood newborns")
+d8_ab <- matrix(get_ab(d8$mu,d8$var),nrow(d8),2,byrow=T)
+save(d8_ab,file="d8_ab.rdata")
+
+d9 <- loadDataset("Cord-blood (whole blood)")
+d9_ab <- matrix(get_ab(d9$mu,d9$var),nrow(d9),2,byrow=T)
+save(d9_ab,file="d9_ab.rdata")
+
+d10 <- loadDataset("Cord-blood (PBMC)")
+d10_ab <- matrix(get_ab(d10$mu,d10$var),nrow(d10),2,byrow=T)
+save(d10_ab,file="d10_ab.rdata")
+
+d11 <- loadDataset("Adult (PBMC)")
+d11_ab <- matrix(get_ab(d11$mu,d11$var),nrow(d11),2,byrow=T)
+save(d11_ab,file="d11_ab.rdata")
+
+d12 <- loadDataset("Sperm")
+d12_ab <- matrix(get_ab(d12$mu,d12$var),nrow(d12),2,byrow=T)
+save(d12_ab,file="d12_ab.rdata")
+
+
+###Load Datasets Back
+
+skew <- Vectorize(function(a,b){2*(b-a)*sqrt(a+b+1)/((a+b+2)*sqrt(a*b))})
+
+load("d1_ab.rdata")
+load("d2_ab.rdata")
+load("d3_ab.rdata")
+load("d4_ab.rdata")
+load("d5_ab.rdata")
+load("d6_ab.rdata")
+load("d7_ab.rdata")
+load("d8_ab.rdata")
+load("d9_ab.rdata")
+load("d10_ab.rdata")
+load("d11_ab.rdata")
+load("d12_ab.rdata")
+
+mats <-   list(d1_ab,
+          d2_ab,
+          d3_ab,
+          d4_ab,
+          d5_ab,
+          d6_ab,
+          d7_ab,
+          d8_ab,
+          d9_ab,
+          d10_ab,
+          d11_ab,
+          d12_ab)
+
+skewdf <- data.frame(ds=0,abs_skew=0)
+
+for(i in 1:12){
+  ds <- i
+  abs_skew <- abs(skew(mats[[i]][,1],mats[[i]][,2]))
+  skewdf <- rbind(skewdf,data.frame(ds,abs_skew))
+}
+skewdf <- skewdf[-1,]
+skewdf <- skewdf[!is.na(skewdf$abs_skew),]
+skewdf$cutoff <- rep(as.vector(cutoffs99),as.vector(lengths))
+skewdf$below <- ifelse(skewdf$abs_skew <= skewdf$cutoff,1,0)
+
+x11()
+boxplot(log(abs_skew)~ds, data=skewdf)
+
+tiss <- c("Saliva",
+          "Lymphoma",
+          "Placenta",
+          "Liver",
+          "Colon",
+          "Blood adult",
+          "Blood 5 year olds",
+          "Blood newborns",
+          "Cord-blood (whole blood)",
+          "Cord-blood (PBMC)",
+          "Adult (PBMC)",
+          "Sperm")
+
+x11()
+ggplot(data=skewdf[skewdf$below==1,], aes(y=as.factor(ds), x=abs_skew)) +
+  geom_violin(trim=T, draw_quantiles=0.5) +
+  scale_y_discrete(labels = tiss) +
+  labs(x = "Absolute Skewness", y = "Tissue Type")
+
+cutoffs99 <- tapply(skewdf$abs_skew,skewdf$ds,quantile,prob=.99)
+lengths <- tapply(skewdf$abs_skew,skewdf$ds,length)

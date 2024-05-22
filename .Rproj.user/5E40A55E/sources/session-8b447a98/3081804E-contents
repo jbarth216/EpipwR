@@ -1,0 +1,278 @@
+##Simulations
+dm_prop <- c(.0001,.001,.01)
+Totals <- c(10000, 50000, 100000, 500000)
+ns <- seq(20,200,by=20)
+N <- 1000
+sig <- .05
+rho <- seq(0.1,0.9,by=0.2)
+
+#library(progress)
+
+#get_power3(1000,100000,20,10,.05,.2)
+Results <- expand.grid(dm_prop, Totals, ns, rho)
+colnames(Results) <- c("dm_prop","Total", "n", "rho")
+Results$avg_pwr <- 0
+Results$stdv_pwr <- 0
+
+pb <- progress_bar$new(total=nrow(Results))
+for(i in 1:nrow(Results)){
+
+  df <- get_power3(Results[i,1]*Results[i,2],Results[i,2],Results[i,3],100,.05,Results[i,4])
+  Results$avg_pwr[i] <- mean(df$power)
+  Results$stdv_pwr[i] <- sd(df$power)
+  pb$tick()
+
+}
+
+setwd("C:\\Users\\Jackson_Barth\\Box\\Research\\Genomics Core\\pwrEWAS\\Sim_Results")
+write.csv(Results,"sim_results_alldata.csv")
+
+Results2 <- expand.grid(dm_prop, Totals, ns, rho)
+colnames(Results2) <- c("dm_prop","Total", "n", "rho")
+Results2$avg_pwr <- 0
+Results2$stdv_pwr <- 0
+
+pb <- progress_bar$new(total=nrow(Results2))
+for(i in 1:nrow(Results2)){
+  pb$tick()
+  if(Results2[i,1]*Results2[i,2]==1){
+    next}
+  df <- get_power4(Results2[i,1]*Results2[i,2],Results2[i,2],Results2[i,3],100,.05,Results2[i,4])
+  Results2$avg_pwr[i] <- mean(df$power)
+  Results2$stdv_pwr[i] <- sd(df$power)
+
+}
+
+write.csv(Results2,"sim_results_alldata_fixed.csv")
+
+
+##Correlation simulation
+##use ab_sets
+load("absets.rdata")
+ab_sets[1:2,1:2]
+
+all_ab <- function(a,b){
+  mu <- a/(a+b)
+  var <- a*b/((a+b+1)*(a+b)^2)
+  skew <- 2*(b-a)*sqrt(a+b+1)/((a+b+2)*sqrt(a*b))
+  data.frame(a=a,b=b,mu=mu,var=var,skew=skew)
+}
+
+res <- all_ab(ab_sets[1,],ab_sets[2,])
+
+nrow(res[abs(res$skew)<.01,])
+
+skew_bins<-c(0,.01,.5,1,1.5,2,2.5,3,10)
+#skew_bins <- c(0,.01)
+ss <- c(10,30,50,100,150,200)
+rho_1 <- seq(.1,.9,.1)
+cnt <- 1
+
+Results <- data.frame(skewness=numeric(9*6*100*(length(skew_bins)-1)),a=0,b=0,ss=0,rho=0,mu_r=0,sd=0,se=0)
+pb <- progress_bar$new(total=nrow(Results))
+  for(i in 2:length(skew_bins)){
+    df <- res[abs(res$skew)>skew_bins[i-1] & abs(res$skew)<skew_bins[i],]
+    nums <- nrow(df)
+    idx<-sample(seq(nums),100)
+    for (j in idx){
+      for (n in ss){
+        for (p in rho_1){
+          tst <- numeric(1000)
+          for (ii in 1:1000){
+            X <- rnorm(n)
+            Y <- rnorm(n)
+            rho <- p
+            X1 <- X*sqrt(1-rho^2) + Y*rho
+            B<-qbeta(pnorm(X1),df$a[j],df$b[j])
+            M <- log(B/(1-B))
+            tst[ii] <- cor(M,Y)
+          }
+          Results$skewness[cnt] <- df$skew[j]
+          Results$a[cnt] <- df$a[j]
+          Results$b[cnt] <- df$b[j]
+          Results$ss[cnt] <- n
+          Results$rho[cnt] <- p
+          Results$mu_r[cnt] <- mean(tst)
+          Results$sd[cnt] <- sd(tst)
+          Results$se[cnt] <- sd(tst)/sqrt(1000)
+          cnt <- cnt + 1
+          pb$tick()
+        }
+      }
+
+    }
+  }
+
+
+setwd("C:\\Users\\Jackson_Barth\\Box\\Research\\Genomics Core\\pwrEWAS\\Sim_Results")
+#write.csv(Results,"sim_cor_all_results.csv")
+Results <- read.csv("sim_cor_all_results.csv")
+
+Results$error <- (Results$mu_r-Results$rho)/Results$se
+Results$rel_error <- (Results$mu_r-Results$rho)/Results$mu_r
+Results$error_raw <- Results$error*Results$se
+
+##Boxplots
+Results$skew_bin <- rep(1:8,rep(5400,8))
+x11()
+boxplot(error~skew_bin,dat=Results[Results$ss==10,])
+
+Results_v<-Results[!is.na(Results$rel_error),]
+
+rel_error_summ <- tapply(Results_v$rel_error,list(Results_v$skew_bin,Results_v$ss,Results_v$rho),median)
+std_error_summ <- tapply(Results_v$error,list(Results_v$skew_bin,Results_v$ss,Results_v$rho),median)
+raw_error_summ <- tapply(Results_v$error_raw,list(Results_v$skew_bin,Results_v$ss,Results_v$rho),median)
+
+tapply(Results_v$rel_error,list(Results_v$skew_bin,Results_v$ss,Results_v$rho),length)
+
+x11()
+plot(1:8,rel_error_summ,type="b",ylim=c(min(rel_error_summ),0.02))
+abline(h=0,col="blue",lty=3)
+
+
+###Try plotting with n = 10, 50, 100, 200
+##Rho at .2, .5, .8
+
+  x11()
+  par(mfrow=c(2,2))
+  for(i in c(1,3,4,6)){
+    plot(1:8,rep(0,8),type="n",ylim=c(-.11,.01),main=paste0("Sample Size = ",ss[i]),
+         xaxt="n",xlab="Absolute skewness (lower bound)",ylab="Relative Error")
+    lines(1:6,rep(0,6),col="blue",lty=3)
+    axis(1,at=1:8,labels=skew_bins[1:8])
+    for(j in c(2,5,8)){
+      lines(1:8,rel_error_summ[,i,j],col=j)
+      points(1:8,rel_error_summ[,i,j],pch=1,col=j)
+    }
+    legend("topright",lty=1,col=c(2,5,8),legend=c(.2, .5, .8),title="Correlation")
+  }
+
+
+##Now try standardized error
+
+x11()
+par(mfrow=c(2,2))
+for(i in c(1,3,4,6)){
+  plot(1:8,rep(0,8),type="n",ylim=c(-6,1),main=paste0("Sample Size = ",ss[i]),xaxt="n",xlab="Absolute skewness (lower bound)")
+  lines(1:6,rep(0,6),col="blue",lty=3)
+  axis(1,at=1:8,labels=skew_bins[1:8])
+  for(j in c(2,5,8)){
+    lines(1:8,std_error_summ[,i,j],col=j)
+    points(1:8,std_error_summ[,i,j],pch=1,col=j)
+  }
+  legend("topright",lty=1,col=c(2,5,8),legend=c(.2, .5, .8),title="Correlation",cex=.5)
+}
+
+##Just error
+x11()
+par(mfrow=c(2,2))
+for(i in c(1,3,4,6)){
+  plot(1:8,rep(0,8),type="n",ylim=c(-.07,.01),main=paste0("Sample Size = ",ss[i]),
+       xaxt="n",xlab="Absolute skewness (lower bound)",ylab="Bias")
+  lines(1:6,rep(0,6),col="blue",lty=3)
+  axis(1,at=1:8,labels=skew_bins[1:8])
+  for(j in c(2,5,8)){
+    lines(1:8,raw_error_summ[,i,j],col=j)
+    points(1:8,raw_error_summ[,i,j],pch=1,col=j)
+  }
+  legend("topright",lty=1,col=c(2,5,8),legend=c(.2, .5, .8),title="Correlation")
+}
+
+
+###Lets roll with relative error- ggplot2 time
+##Unravel list
+df_error <- data.frame(skewness_bin=rep(1:8,6*9), sample_size=rep(rep(c(10,30,50,100,150,200),rep(8,6)),9),
+                       correlation = rep(seq(0.1,0.9,by=0.1),rep(48,9)), error=as.vector(raw_error_summ))
+
+df_error_3c <- df_error[df_error$correlation %in% c(0.2,0.5,0.8),]
+library(ggplot2)
+library(gridExtra)
+x11()
+g10<-ggplot(df_error_3c[df_error_3c$sample_size==10,],aes(x=skewness_bin, y=error, color=factor(correlation), group=correlation)) +
+  geom_point(size=3) + geom_line(linewidth=1.2) + ggtitle("Sample Size: 10") + xlab("Absolute Skewness (upper bound)") +
+  ylab("Bias") + labs(color="Correlation") + scale_x_continuous(breaks=seq(8),labels=c('.01','0.5','1','1.5','2','2.5','3','10'))+
+  theme(plot.title=element_text(size=20, hjust=0.5),axis.text=element_text(size=12),axis.title=element_text(size=15),
+        legend.title = element_text(size=15), legend.text = element_text(size=12))
+
+g50<-ggplot(df_error_3c[df_error_3c$sample_size==50,],aes(x=skewness_bin, y=error, color=factor(correlation), group=correlation)) +
+  geom_point(size=3) + geom_line(linewidth=1.2) + ggtitle("Sample Size: 50") + xlab("Absolute Skewness (upper bound)") +
+  ylab("Bias") + labs(color="Correlation") + scale_x_continuous(breaks=seq(8),labels=c('.01','0.5','1','1.5','2','2.5','3','10'))+
+  theme(plot.title=element_text(size=20, hjust=0.5),axis.text=element_text(size=12),axis.title=element_text(size=15),
+        legend.title = element_text(size=15), legend.text = element_text(size=12))
+
+g100 <- ggplot(df_error_3c[df_error_3c$sample_size==100,],aes(x=skewness_bin, y=error, color=factor(correlation), group=correlation)) +
+  geom_point(size=3) + geom_line(linewidth=1.2) + ggtitle("Sample Size: 100") + xlab("Absolute Skewness (upper bound)") +
+  ylab("Bias") + labs(color="Correlation") + scale_x_continuous(breaks=seq(8),labels=c('.01','0.5','1','1.5','2','2.5','3','10'))+
+  theme(plot.title=element_text(size=20, hjust=0.5),axis.text=element_text(size=12),axis.title=element_text(size=15),
+        legend.title = element_text(size=15), legend.text = element_text(size=12))
+
+g200 <- ggplot(df_error_3c[df_error_3c$sample_size==200,],aes(x=skewness_bin, y=error, color=factor(correlation), group=correlation)) +
+  geom_point(size=3) + geom_line(linewidth=1.2) + ggtitle("Sample Size: 200") + xlab("Absolute Skewness (upper bound)") +
+  ylab("Bias") + labs(color="Correlation") + scale_x_continuous(breaks=seq(8),labels=c('.01','0.5','1','1.5','2','2.5','3','10'))+
+  theme(plot.title=element_text(size=20, hjust=0.5),axis.text=element_text(size=12),axis.title=element_text(size=15),
+        legend.title = element_text(size=15), legend.text = element_text(size=12))
+x11()
+grid.arrange(g10, g50, g100, g200)
+##Computation time
+##Do the actual function
+##Make sure to source the parent and child functions
+##Diff. cpg: 10, 100, 1000
+##n: 10, 50, 100, 200
+##rho: .1, .3, .5, .7, .9
+##sd_mu: 0, .05
+dm <- c(10,100,1000)
+n <- c(10,50,100,200)
+rho_mu <- c(.1,.3,.5,.7,.9)
+rho_sd <- c(0,.05)
+
+save(comp_res,"comp_res.rdata")
+load("comp_res.rdata")
+write.csv(comp_res,"CompTime_Results.csv")
+
+#get_power()
+
+
+Start <- Sys.time()
+get_power(1000,100000,10,.05,.9,0)
+Sys.time() - Start
+
+
+##OG simulation but with new ab_sets
+
+dm <- c(10,100,1000)
+Totals <- 100000
+ns <- c(10,20,50,100,200)
+N <- 1000
+sig <- .05
+rho <- seq(0.1,0.9,by=0.2)
+
+#library(progress)
+
+#get_power3(1000,100000,20,10,.05,.2)
+Results <- expand.grid(dm, Totals, ns, rho)
+colnames(Results) <- c("dm","Total", "n", "rho")
+Results$avg_pwr <- 0
+Results$se_pwr <- 0
+Results$N <- 0
+
+pb <- progress_bar$new(total=nrow(Results))
+for(i in 1:nrow(Results)){
+
+  df <- get_power(Results[i,1],100000,Results[i,3],.05,Results[i,4])
+  Results$avg_pwr[i] <- df$avg_power
+  Results$se_pwr[i] <- df$se_power
+  Results$N[i] <- df$N
+
+  pb$tick()
+
+}
+ab_sets <- t(d1_ab)
+setwd("C:\\Users\\Jackson_Barth\\Box\\Research\\Genomics Core\\pwrEWAS\\Sim_Results")
+write.csv(Results,"sim_results_absets1.csv")
+
+ab_sets <- t(d2_ab)
+write.csv(Results,"sim_results_absets2.csv")
+
+ab_sets <- t(d3_ab)
+write.csv(Results,"sim_results_absets3.csv")
+
