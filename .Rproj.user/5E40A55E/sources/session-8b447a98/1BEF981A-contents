@@ -1,6 +1,0 @@
-##Blind letter
-Choose_slot <- function(letter, current=c(0,0,0,0,0)){
-  if(current[1]==0){
-    
-  }
-}
