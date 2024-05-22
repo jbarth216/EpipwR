@@ -1,9 +1,9 @@
 {
     "id": "DE432D07",
-    "path": "C:/Users/Jackson_Barth/Documents/Packages_local/EpipwR/R/Clean_child_functions.R",
+    "path": "~/Packages_local/EpipwR/R/Clean_child_functions.R",
     "project_path": "R/Clean_child_functions.R",
     "type": "r_source",
-    "hash": "274075878",
+    "hash": "2777705447",
     "contents": "",
     "dirty": false,
     "created": 1716215593683.0,
@@ -12,15 +12,15 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "3,0",
+        "cursorPosition": "0,0",
         "scrollLine": "0"
     },
     "folds": "",
-    "lastKnownWriteTime": 1716235826,
+    "lastKnownWriteTime": 1716399186,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1716235826307,
+    "last_content_update": 1716399186737,
     "read_only": false,
     "read_only_alternatives": []
 }
