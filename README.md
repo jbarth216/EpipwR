@@ -11,4 +11,7 @@ install_github("jbarth216/EpipwR", build_vignettes=TRUE)
 ```
 
 # Usage
-A detailed EpipwR workflow can be found in the EpipwR vignette.
+A detailed EpipwR workflow can be found in the EpipwR vignette:
+```
+browseVignettes("EpipwR")
+```
