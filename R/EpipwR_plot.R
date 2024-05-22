@@ -13,10 +13,10 @@
 EpipwR_plot<-function(df){
   df$moe_min <- df$avg_power - 1.96*df$se_power
   df$moe_max <- df$avg_power + 1.96*df$se_power
-  ggplot2::ggplot(df, aes(x = sample_size, y = avg_power, color = as.character(rho_mu))) +
+  ggplot2::ggplot(df, ggplot2::aes(x = sample_size, y = avg_power, color = as.character(rho_mu))) +
     ggplot2::geom_line(linewidth = 1.25) +
     ggplot2::geom_point(size = 2.5) +
-    ggplot2::geom_errorbar(aes(ymin = moe_min, ymax = moe_max), linewidth = 1.25) +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = moe_min, ymax = moe_max), linewidth = 1.25) +
     ggplot2::geom_hline(yintercept=0.8, linetype="dashed", color = "black") +
     ggplot2::geom_hline(yintercept=0.9, linetype="dashed", color = "black") +
     ggplot2::labs(title = "Mean power curve(s) with 95% confidence intervals",
@@ -25,6 +25,6 @@ EpipwR_plot<-function(df){
          color=expression(mu[rho])) +
     # theme_bw() +
     ggplot2::ylim(0,1) +
-    ggplot2::theme(text=element_text(size=18))
+    ggplot2::theme(text=ggplot2::element_text(size=18))
 }
 
