@@ -7,7 +7,7 @@
 EpipwR_plot(df)
 }
 \arguments{
-\item{df}{A data frame containing output from the \code{get_power_cont()} function.}
+\item{df}{A data frame containing output from the \code{get_power_cont()} or \code{get_power_cc()} function.}
 }
 \description{
 Plots 95\% error bars of EpipwR output.

@@ -1,16 +1,20 @@
 Package: EpipwR
 Type: Package
 Title: Efficient Power Analysis for EWAS with Continuous Outcomes
-Version: 0.1.0
-Author: Jackson Barth, Austin Reynolds
-Maintainer: Jackson Barth <Jackson_Barth@Baylor.edu>
+Version: 0.99.0
+Authors@R:
+  c(person(given="Jackson", family="Barth", role=c("aut","cre"), email="Jackson_Barth@Baylor.edu",
+  comment=c(ORCID = "0009-0009-6307-9928")),
+    person("Austin", "Reynolds", role="aut"),
+    person("Mary Lauren", "Benton", role="ctb"),
+    person("Carissa","Fong",role="ctb"))
 Description: A quasi-simulation based approach to performing power analysis 
     for EWAS (Epigenome-wide association studies) with continuous outcomes. 
     'EpipwR' relies on empirical EWAS datasets to determine power at specific 
     sample sizes while keeping computational cost low.  
-License: GPL (>= 3)
+License: Artistic-2.0
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 Imports: 
     EpipwR.data,
     ExperimentHub,
@@ -23,3 +27,4 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+biocViews: Epigenetics, ExperimentalDesign
