@@ -20,17 +20,17 @@ library(EpipwR)
 
 ### Introduction
 
-EpipwR is a quasi-simulation based approach to power analysis for epigenome-wide association studies (EWAS) with a continuous outcome variable. It is fast, efficient and allows the exact level of precision to be set by the user. EpipwR is simple in that it has two main functions: `get_power_cont()` calculates power for various settings and `EpipwR_plot()` plots the output. The following vignette describes in detail the EpipwR workflow.
+EpipwR is a quasi-simulation based approach to power analysis for epigenome-wide association studies (EWAS) with a continuous or binary outcome variable. It is fast, efficient and allows the exact level of precision to be set by the user. EpipwR is simple in that it has three main functions: `get_power_cont()` and `get_power_cc` calculate power for various settings with continuous and binary outcomes (respectively) and `EpipwR_plot()` plots the output. The following vignette describes in detail the EpipwR workflow for an analysis of a continuous outcome.
 
 ### Methodology Overview
 
-Suppose an upcoming EWAS analyzes the methylation levels at $K$ CpG sites and some continuous outcome $Y$. Of the $K$ CpG sites, it is assumed that only a subest of these ($K_m$ ) have non-zero correlation to $Y$. The goal of EpipwR is to determine the level of power acheived by this study at a given sample size $n$, where power is defined as the proportion of the $K_m$ CpG sites are found to have a statistically significant association with $Y$.
+Suppose an upcoming EWAS plans to analyze the methylation levels at $K$ CpG sites and some continuous outcome $Y$. Of the $K$ CpG sites, it is assumed that only a subest of these ($K_m$ ) have non-zero correlation to $Y$. The goal of EpipwR is to determine the level of power achieved by this study at a given sample size $n$, where power is defined as the proportion of the $K_m$ CpG sites are found to have a statistically significant association with $Y$.
 
-To begin, EpipwR generates data for the $K_m$ CpG methylation levels and for $Y$. Users specify $\mu_\rho$ and $\sigma_\rho$, the average and standard deviation of the correlation between each of the $K_m$ methylation levels and $Y$. If users prefer that all $K_m$ methylation levels have equal correlation with $Y$, then $\sigma_\rho$ can be set to 0. Like many power analysus tools, EpipwR assumes no correlation across CpG sites (i.e., they are conditionally independent given $Y$). Users also select which empirical EWAS data to use to generate initial methylation levels. Full details of the data generation process can be found in the corresponding EpipwR article.
+To begin, EpipwR generates data for the $K_m$ CpG methylation levels and for $Y$. Users specify $\mu_\rho$ and $\sigma_\rho$, the average and standard deviation of the correlation between each of the $K_m$ methylation levels and $Y$. If users prefer that all $K_m$ methylation levels have equal correlation with $Y$, then $\sigma_\rho$ can be set to 0. Like many power analysis tools, EpipwR assumes no correlation across CpG sites (i.e., they are conditionally independent given $Y$). Users also select which empirical EWAS data to use to generate initial methylation levels. Full details of the data generation process can be found in the corresponding EpipwR article.
 
-Once a dataset has been generated, p-values are calculated by performing the specified hypothesis test (Pearson, Spearman or Kendall correlation) for each $K_m$ site. Please note that in absence of any "vertical" correlation or lurking variables, performing a standard analysis in Limma is equaivalent to using the Pearson correlation test. Users can specify either a false discovery rate or family-wise type I error rate correction for determining statistical significance. If the false discovery rate is selected, p-values for the remaining null tests are generated via a $Uniform(0,1)$ distribution.
+Once a dataset has been generated, p-values are calculated by performing the specified hypothesis test (Pearson, Spearman or Kendall correlation) for each $K_m$ site. Please note that in absence of any "vertical" correlation or additional covariates, performing a standard analysis in limma is equivalent to using the Pearson correlation test. Users can specify either a false discovery rate or family-wise type I error rate correction for determining statistical significance. If the false discovery rate is selected, p-values for the remaining null tests are generated via a $Uniform(0,1)$ distribution.
 
-Since the process described above is based heavily on random sampling, it must be repeated on several data sets to produce a reliable power estimate. Whereas traditional tools require the user to specify the number of repetitions, EpipwR sets 20 to the minimum number of data sets, allows users to set a maximum number of data sets and a level of precision in the form of a 95% confidence interval margin of error. Anytime after the first 20 datasets, EpipwR terminates once one of these two conditions are met. The default margin of error is 3% (it is recommended that this be between 1 and 5%). For example, if the target margin of error is 3% and the maximum number of data sets is 1000, then the algorithm stops when $N=1000$ or once the following condition is met
+Since the process described above is based heavily on random sampling, it must be repeated on several data sets to produce a reliable power estimate. Whereas traditional tools require the user to specify the number of repetitions, EpipwR sets 20 to the minimum number of data sets, allows users to set a maximum number of data sets and a level of precision in the form of a 95% confidence interval margin of error. Anytime after the first 20 datasets, EpipwR terminates once one of these two conditions are met. The default margin of error is 3% (it is recommended that this be between 1 and 5%). For example, if the target margin of error is 3% and the maximum number of data sets is 1000, then the algorithm stops when $N=1000$ or once the following conditions are met:
 
 $$1.96\cdot\frac{s_{(N)}}{\sqrt{N}}<.03,\qquad N\ge20
 $$
@@ -42,7 +42,7 @@ where $s_{(N)}$ is the standard deviation of average power over $N$ data sets.
 The below table describes the details of the `get_power_cont` inputs.
 
 |                      |                                                                                                                                       |
-|---------------|---------------------------------------------------------|
+|-----------------|-------------------------------------------------------|
 | **Parameter**        | **Description**                                                                                                                       |
 | `dm`                 | The total number of non-null tests (i.e., the number of CpG sites with methylation having a non-zero correlation with the phenotype). |
 | `Total`              | The total number of tests (i.e., total number of CpG sites in the study).                                                             |
@@ -61,7 +61,7 @@ The below table describes the details of the `get_power_cont` inputs.
 
 Suppose the user is planning an EWAS of 100,000 CpG sites with an estimated 100 of those having a non-zero correlation with continuous phenotype. They would like to test sample sizes of 70, 80, 90, 100 and fixed correlations of 0.3, 0.4 and 0.5. They plan to use an FDR of 5% on Pearson correlation tests, the Saliva empirical EWAS and 1,000 as the maximum number of data sets. Since they hope to have very accurate results, the margin of error is set to be 1%. They would then execute the following code:
 
-``` R
+``` r
 output <- get_power_cont(
   dm=100
   ,Total=100000
@@ -90,4 +90,12 @@ Finally, users can also summarize the output with error bar plots with `EpipwR_p
 
 ![](Plot.png){width="700"}
 
-Please note that `EpipwR_plot` can only run with the data frame output of `get_power_cont` - it will not work with data in any other format.
+Please note that `EpipwR_plot` can only run with the data frame output of `get_power_cont` or `get_power_cc` - it will not work with data in any other format.
+
+```{r}
+# Load sessioninfo package
+library(sessioninfo)
+
+# Display session information
+session_info()
+```

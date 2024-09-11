@@ -9,6 +9,10 @@ EpipwR_plot(df)
 \arguments{
 \item{df}{A data frame containing output from the \code{get_power_cont()} or \code{get_power_cc()} function.}
 }
+\value{
+A line plot with sample size on the x-axis and power on the y-axis. Multiple lines are plotted
+for each correlation/effect size mean specified.
+}
 \description{
 Plots 95\% error bars of EpipwR output.
 Different sample sizes are displayed along the x-axis with lines
