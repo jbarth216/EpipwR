@@ -6,6 +6,6 @@ bibentry(
   journal= "bioRxiv",
   year   = 2024,
   note   = "Preprint",
-  doi    = "https://doi.org/10.1101/2024.09.06.611713"
+  doi    = "https://doi.org/10.1101/2024.09.06.611713",
   url    = "https://www.biorxiv.org/content/10.1101/2024.09.06.611713v1"
 )
