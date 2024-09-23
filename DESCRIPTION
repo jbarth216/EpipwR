@@ -1,7 +1,7 @@
 Package: EpipwR
 Type: Package
 Title: Efficient Power Analysis for EWAS with Continuous Outcomes
-Version: 0.99.0
+Version: 0.99.1
 Authors@R:
   c(person(given="Jackson", family="Barth", role=c("aut","cre"), 
   email="Jackson_Barth@Baylor.edu",
