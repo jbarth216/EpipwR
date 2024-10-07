@@ -20,13 +20,13 @@ library(EpipwR)
 
 ### Introduction
 
-EpipwR is a quasi-simulation based approach to power analysis for epigenome-wide association studies (EWAS) with a continuous or binary outcome variable. It is fast, efficient and allows the exact level of precision to be set by the user. EpipwR is simple in that it has three main functions: `get_power_cont()` and `get_power_cc` calculate power for various settings with continuous and binary outcomes (respectively) and `EpipwR_plot()` plots the output. The following vignette describes in detail the EpipwR workflow for an analysis of a continuous outcome.
+EpipwR is a quasi-simulation based approach to power analysis for epigenome-wide association studies (EWAS) with a continuous or binary outcome variable. It is fast, efficient and allows the exact level of precision to be set by the user. EpipwR is the first open source tool able to calculate power for EWAS with a continuous outcome. For binary outcomes, it re-implements the pwrEWAS methodology (Graw et al., 2019 - currently available on GitHub) with a few changes and significantly improves the computation time.  EpipwR is simple in that it has three main functions: `get_power_cont()` and `get_power_cc` calculate power for various settings with continuous and binary outcomes (respectively) and `EpipwR_plot()` plots the output. The following vignette describes in detail the EpipwR workflow for an analysis of a continuous outcome.
 
-### Methodology Overview
+### Methodology (Continuous Outcome)
 
 Suppose an upcoming EWAS plans to analyze the methylation levels at $K$ CpG sites and some continuous outcome $Y$. Of the $K$ CpG sites, it is assumed that only a subest of these ($K_m$ ) have non-zero correlation to $Y$. The goal of EpipwR is to determine the level of power achieved by this study at a given sample size $n$, where power is defined as the proportion of the $K_m$ CpG sites are found to have a statistically significant association with $Y$.
 
-To begin, EpipwR generates data for the $K_m$ CpG methylation levels and for $Y$. Users specify $\mu_\rho$ and $\sigma_\rho$, the average and standard deviation of the correlation between each of the $K_m$ methylation levels and $Y$. If users prefer that all $K_m$ methylation levels have equal correlation with $Y$, then $\sigma_\rho$ can be set to 0. Like many power analysis tools, EpipwR assumes no correlation across CpG sites (i.e., they are conditionally independent given $Y$). Users also select which empirical EWAS data to use to generate initial methylation levels. Full details of the data generation process can be found in the corresponding EpipwR article.
+To begin, EpipwR generates data for the $K_m$ CpG methylation levels and for $Y$. Users specify $\mu_\rho$ and $\sigma_\rho$, the average and standard deviation of the correlation between each of the $K_m$ methylation levels and $Y$. If users prefer that all $K_m$ methylation levels have equal correlation with $Y$, then $\sigma_\rho$ can be set to 0. Like many power analysis tools, EpipwR assumes no correlation across CpG sites (i.e., they are conditionally independent given $Y$). Users also select which empirical EWAS data to use to generate initial methylation levels. Full details of the data generation process can be found in the corresponding EpipwR article (Barth and Reynolds, 2024).
 
 Once a dataset has been generated, p-values are calculated by performing the specified hypothesis test (Pearson, Spearman or Kendall correlation) for each $K_m$ site. Please note that in absence of any "vertical" correlation or additional covariates, performing a standard analysis in limma is equivalent to using the Pearson correlation test. Users can specify either a false discovery rate or family-wise type I error rate correction for determining statistical significance. If the false discovery rate is selected, p-values for the remaining null tests are generated via a $Uniform(0,1)$ distribution.
 
@@ -57,6 +57,9 @@ The below table describes the details of the `get_power_cont` inputs.
 | `use_fdr=T`          | Indicates that the false discovery rate should be used as the correction. Otherwise, uses FWER.                                       |
 | `Suppress_Updates=F` | If `T` , removes intermediate status updates.                                                                                         |
 
+### Methodology (Binary outcome)
+For the case-control setting, EpipwR re-implements the pwrEWAS methodology (Graw et al., 2019) with a few key changes to improve speed and interpretation, namely (1) keeping the precision equal between groups rather than variance, (2) requiring users to specify mean and variance for an effect size distribution (rather than a target maximal difference) and (3) generating p-values directly for null tests. Like in `get_power_cont`, `get_power_cc` calculates the optimal amount of data sets needed to determine power at a user-specified level of precision.  
+
 ### EpipwR Workflow
 
 Suppose the user is planning an EWAS of 100,000 CpG sites with an estimated 100 of those having a non-zero correlation with continuous phenotype. They would like to test sample sizes of 70, 80, 90, 100 and fixed correlations of 0.3, 0.4 and 0.5. They plan to use an FDR of 5% on Pearson correlation tests, the Saliva empirical EWAS and 1,000 as the maximum number of data sets. Since they hope to have very accurate results, the margin of error is set to be 1%. They would then execute the following code:
@@ -80,7 +83,7 @@ output <- get_power_cont(
 output
 ```
 
-which produces the following dataframe.
+which produces the following data frame.
 
 ![](EpipwR_table.png)
 
@@ -99,3 +102,9 @@ library(sessioninfo)
 # Display session information
 session_info()
 ```
+
+# References
+Barth, J., Reynolds, A.W. (2024). EpipwR: Efficient Power Analysis for EWAS with Continuous Outcomes [preprint].
+*bioRxiv*, 2024.09.06.611713; doi: https://doi.org/10.1101/2024.09.06.611713
+
+Graw, S., Henn, R., Thompson, J. A., and Koestler, D. C. (2019). pwrEWAS: A user-friendly tool for comprehensive power estimation for epigenome wide association studies (EWAS). *BMC Bioinformatics*, 20(1):218.

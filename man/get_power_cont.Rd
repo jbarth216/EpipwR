@@ -26,56 +26,77 @@ get_power_cont(
 
 \item{n}{Sample size(s) for which power is calculated (accepts a vector).}
 
-\item{fdr_fwer}{Either the false discovery rate or the family-wise type I error rate, depending on \code{use_fdr}.}
+\item{fdr_fwer}{Either the false discovery rate or the family-wise type I
+error rate, depending on \code{use_fdr}.}
 
-\item{rho_mu}{Mean correlation(s) of methylation and phenotype for non-null tests (accepts a vector). If multiple \code{n} and \code{rho_mu} are specified, power is calculated for all unique settings under the Cartesian product of these vectors.}
+\item{rho_mu}{Mean correlation(s) of methylation and phenotype for non-null
+tests (accepts a vector). If multiple \code{n} and \code{rho_mu} are specified, power
+is calculated for all unique settings under the Cartesian product of these
+vectors.}
 
-\item{rho_sd}{Standard deviation of methylation and phenotype for non-null tests. If 0 all correlations are fixed at \code{rho_mu}.}
+\item{rho_sd}{Standard deviation of methylation and phenotype for non-null
+tests. If 0 all correlations are fixed at \code{rho_mu}.}
 
-\item{Tissue}{Tissue type of Empirical EWAS to be used for data generation (see details for valid options).}
+\item{Tissue}{Tissue type of Empirical EWAS to be used for data generation
+(see details for valid options).}
 
 \item{Nmax}{The maximum number of datasets used to calculate power}
 
-\item{MOE}{The target margin of error of a 95\% confidence interval for average power. This determines the stopping point of the algorithm.}
+\item{MOE}{The target margin of error of a 95\% confidence interval
+for average power. This determines the stopping point of the algorithm.}
 
-\item{test}{The type of statistical test to be used. \code{"pearson"}, \code{"kendall"} and \code{"spearman"} are valid options.}
+\item{test}{The type of statistical test to be used. \code{"pearson"},
+\code{"kendall"} and \code{"spearman"} are valid options.}
 
-\item{use_fdr}{If \code{TRUE}, uses \code{fdr_fwer} as the false discovery rate. If \code{FALSE}, uses the family-wise type I error rate.}
+\item{use_fdr}{If \code{TRUE}, uses \code{fdr_fwer} as the false discovery rate.
+If \code{FALSE}, uses the family-wise type I error rate.}
 
-\item{Suppress_updates}{If \code{TRUE}, blocks messages reporting the completion of each unique setting.}
+\item{Suppress_updates}{If \code{TRUE}, blocks messages reporting the completion
+of each unique setting.}
 }
 \value{
-A dataframe with rows equal to the number of \code{n} and \code{rho_mu} combinations
+A data frame with rows equal to the number of \code{n} and \code{rho_mu}
+combinations
 }
 \description{
 Calculates power for EWAS with a continuous outcome for multiple
 sample sizes and/or correlations. Data sets are only simulated for the
 non-null tests; p-values are generated directly for the null tests.
-Rather than specifying the number of data sets to calculate power, you specify the precision level (\code{MOE})
+Rather than specifying the number of data sets to calculate power, you
+specify the precision level (\code{MOE})
 and a maximum number of data sets (\code{Nmax}). After 20 data sets, the
-function terminates when the desired precision level is reached or if the number
-of tested data sets reaches \code{Nmax}.
+function terminates when the desired precision level is reached or if the
+number of tested data sets reaches \code{Nmax}.
 }
 \details{
-Valid options for the \code{Tissue} argument are \code{"Saliva"}, \code{"Lymphoma"}, \code{"Placenta"}, \code{"Liver"},
-\code{"Colon"}, \code{"Blood adult"}, \code{"Blood 5 year olds"}, \code{"Blood newborns"}, \code{"Cord-blood (whole blood)"},
-\code{"Cord-blood (PBMC)"}, \code{"Adult (PBMC)"}, and \code{"Sperm"}. All data sets are publicly available on the gene
-expression omnibus (see \href{https://github.com/jbarth216/EpipwR.data}{EpipwR.data} package for more details) and were identified by Graw, et. al. (2019).
-Please note that, due to some extreme values in this data, the Lymphoma option will occasionally throw
-a warning related to data generation. At this time, we recommend using one of the other tissue options.
+Valid options for the \code{Tissue} argument are \code{"Saliva"}, \code{"Lymphoma"},
+\code{"Placenta"}, \code{"Liver"}, \code{"Colon"}, \code{"Blood adult"}, \code{"Blood 5 year olds"},
+\code{"Blood newborns"}, \code{"Cord-blood (whole blood)"}, \code{"Cord-blood (PBMC)"},
+\code{"Adult (PBMC)"}, and \code{"Sperm"}. All data sets are publicly available on the
+gene expression omnibus (see
+\href{https://github.com/jbarth216/EpipwR.data}{EpipwR.data} package for
+more details) and were identified by Graw, et. al. (2019). Please note that,
+due to some extreme values in this data, the Lymphoma option will
+occasionally throw a warning related to data generation. At this time, we
+recommend using one of the other tissue options.
 
-Although this function only covers 3 types of statistical tests, its worth noting that tests run using software
-packages such as limma will yield the same results as a pearson correlation test in the absence of covariates
-or any dependence across CpG sites (as is the assumption here). Any users wanting to mimic an analysis done
-in limma should use \code{test="pearson"}.
+Although this function only covers 3 types of statistical tests, its worth
+noting that tests run using software packages such as limma will yield the
+same results as a pearson correlation test in the absence of covariates
+or any dependence across CpG sites (as is the assumption here).
+Any users wanting to mimic an analysis done in limma should use
+\code{test="pearson"}.
 }
 \examples{
-# This examples calculates power for 100 non-null tests out of 10,000 total with an FDR of 5\%.
-# Sample sizes of 70,80,90,100 and fixed correlations at 0.3,0.4,0.5 are used.
+# This examples calculates power for 100 non-null tests out of 10,000 total
+# with an FDR of 5\%.
+# Sample sizes of 70,80,90,100 and fixed correlations at 0.3,0.4,0.5 are
+# used.
 get_power_cont(100,10000,c(70,80,90,100),.05,c(.3,.4,.5))
 }
 \references{
-Graw, S., Henn, R., Thompson, J. A., and Koestler, D. C. (2019). pwrEWAS:
-A user-friendly tool for comprehensive power estimation for epigenome wide
-association studies (EWAS). \emph{BMC Bioinformatics}, 20(1):218.
+Graw, S., Henn, R., Thompson, J. A., and Koestler, D. C. (2019).
+pwrEWAS: #' A user-friendly tool for comprehensive power estimation for
+epigenome wide association studies (EWAS). \emph{BMC Bioinformatics},
+20(1):218.
 }

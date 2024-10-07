@@ -25,61 +25,81 @@ get_power_cc(
 
 \item{Total}{The total number of tests (null and non-null).}
 
-\item{n}{Sample size(s) for which power is calculated (accepts a vector). This is total sample size.}
+\item{n}{Sample size(s) for which power is calculated (accepts a vector).
+This is total sample size.}
 
-\item{fdr_fwer}{Either the false discovery rate or the family-wise type I error rate, depending on \code{use_fdr}.}
+\item{fdr_fwer}{Either the false discovery rate or the family-wise type I
+error rate, depending on \code{use_fdr}.}
 
-\item{delta_mu}{Average effect size (difference in mean methylation between groups) for non-null tests (accepts a vector).
-If multiple \code{n} and \code{delta_mu} are specified, power is calculated for all unique settings under the Cartesian product of these vectors.}
+\item{delta_mu}{Average effect size (difference in mean methylation between
+groups) for non-null tests (accepts a vector). If multiple \code{n} and
+\code{delta_mu} are specified, power is calculated for all unique settings under
+the Cartesian product of these vectors.}
 
-\item{delta_sd}{Standard deviation of the effect size for non-null tests. If 0, all effect sizes are fixed at \code{delta_mu}.}
+\item{delta_sd}{Standard deviation of the effect size for non-null tests.
+If 0, all effect sizes are fixed at \code{delta_mu}.}
 
-\item{n1_prop}{Indicates the proportion of the total sample size (\code{n}) in group 1 (rounded to the nearest integer).}
+\item{n1_prop}{Indicates the proportion of the total sample size (\code{n}) in
+group 1 (rounded to the nearest integer).}
 
-\item{Tissue}{Tissue type of Empirical EWAS to be used for data generation (see details for valid options).}
+\item{Tissue}{Tissue type of Empirical EWAS to be used for data generation
+(see details for valid options).}
 
 \item{Nmax}{The maximum number of data sets used to calculate power.}
 
-\item{MOE}{The target margin of error of a 95\% confidence interval for average power. This determines the stopping point of the algorithm.}
+\item{MOE}{The target margin of error of a 95\% confidence interval for
+average power. This determines the stopping point of the algorithm.}
 
-\item{test}{The type of t-test to be used. \code{"pooled"} indicates a pooled variance t-test while \code{"WS"} indicates Welch's t-test.}
+\item{test}{The type of t-test to be used. \code{"pooled"} indicates a pooled
+variance t-test while \code{"WS"} indicates Welch's t-test.}
 
-\item{use_fdr}{If \code{TRUE}, uses \code{fdr_fwer} as the false discovery rate. If \code{FALSE}, uses the family-wise type I error rate.}
+\item{use_fdr}{If \code{TRUE}, uses \code{fdr_fwer} as the false discovery rate. If
+\code{FALSE}, uses the family-wise type I error rate.}
 
-\item{Suppress_updates}{If \code{TRUE}, blocks messages reporting the completion of each unique setting.}
+\item{Suppress_updates}{If \code{TRUE}, blocks messages reporting the completion
+of each unique setting.}
 }
 \value{
-A dataframe with rows equal to the number of \code{n} and \code{rho_mu} combinations
+A dataframe with rows equal to the number of \code{n} and \code{rho_mu}
+combinations
 }
 \description{
 Calculates power for EWAS with a binary outcome for multiple
 sample sizes and/or effect sizes. Data sets are only simulated for the
 non-null tests; p-values are generated directly for the null tests.
-Rather than specifying the number of data sets to calculate power, you specify the precision level (\code{MOE})
+Rather than specifying the number of data sets to calculate power, you
+specify the precision level (\code{MOE})
 and a maximum number of data sets (\code{Nmax}). After 20 data sets, the
-function terminates when the desired precision level is reached or if the number
-of tested data sets reaches \code{Nmax}.
+function terminates when the desired precision level is reached or if the
+number of tested data sets reaches \code{Nmax}.
 }
 \details{
-Valid options for the \code{Tissue} argument are \code{"Saliva"}, \code{"Lymphoma"}, \code{"Placenta"}, \code{"Liver"},
-\code{"Colon"}, \code{"Blood adult"}, \code{"Blood 5 year olds"}, \code{"Blood newborns"}, \code{"Cord-blood (whole blood)"},
-\code{"Cord-blood (PBMC)"}, \code{"Adult (PBMC)"}, and \code{"Sperm"}. All data sets are publicly available on the gene
-expression omnibus (see \href{https://github.com/jbarth216/EpipwR.data}{EpipwR.data} package for more details) and were identified by Graw, et. al. (2019).
-Please note that, due to some extreme values in this data set, the Lymphoma option will occasionally throw
-a warning related to data generation. At this time, we recommend using one of the other tissue options.
+Valid options for the \code{Tissue} argument are \code{"Saliva"}, \code{"Lymphoma"},
+\code{"Placenta"}, \code{"Liver"}, \code{"Colon"}, \code{"Blood adult"}, \code{"Blood 5 year olds"},
+\code{"Blood newborns"}, \code{"Cord-blood (whole blood)"}, \code{"Cord-blood (PBMC)"},
+\code{"Adult (PBMC)"}, and \code{"Sperm"}. All data sets are publicly available on the
+gene expression omnibus (see
+\href{https://github.com/jbarth216/EpipwR.data}{EpipwR.data} package for
+more details) and were identified by Graw, et. al. (2019). Please note that,
+due to some extreme values in this data set, the Lymphoma option will
+occasionally throw a warning related to data generation. At this time, we
+recommend using one of the other tissue options.
 
-Unlike pwrEWAS (Graw et al., 2019), EpipwR enforces equality of precision (sum of the parameters) on the distributions
-of each group rather than equality of variance.
+Unlike pwrEWAS (Graw et al., 2019), EpipwR enforces equality of precision
+(sum of the parameters) on the distributions of each group rather than
+equality of variance.
 }
 \examples{
-# This examples calculates power for 100 non-null tests out of 10,000 total with an FDR of 5\%.
-# Sample sizes of 40, 50, 60, 70 and fixed effect sizes of 0.01, 0.02, 0.05 are used.
-# For improved accuracy, MOE=.01 to ensure that the 95\% confidence interval for average power
-# has a margin of error no larger than .01 (unless the maximum of 1,000 data sets is exceeded).
+# This examples calculates power for 100 non-null tests out of 10,000 total
+# with an FDR of 5\%. Sample sizes of 40, 50, 60, 70 and fixed effect sizes
+# of 0.01, 0.02, 0.05 are used. For improved accuracy, MOE=.01 to ensure
+# that the 95\% confidence interval for average power has a margin of error
+# no larger than .01 (unless the maximum of 1,000 data sets is exceeded).
 get_power_cc(100,10000,c(40,50,60,70),.05,c(.01,.02,.05), MOE=.01)
 }
 \references{
-Graw, S., Henn, R., Thompson, J. A., and Koestler, D. C. (2019). pwrEWAS:
-A user-friendly tool for comprehensive power estimation for epigenome wide
-association studies (EWAS). \emph{BMC Bioinformatics}, 20(1):218.
+Graw, S., Henn, R., Thompson, J. A., and Koestler, D. C. (2019).
+pwrEWAS: A user-friendly tool for comprehensive power estimation for
+epigenome wide association studies (EWAS). \emph{BMC Bioinformatics},
+20(1):218.
 }
