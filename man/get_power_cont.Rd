@@ -16,7 +16,8 @@ get_power_cont(
   MOE = 0.03,
   test = "pearson",
   use_fdr = TRUE,
-  Suppress_updates = FALSE
+  Suppress_updates = FALSE,
+  emp_data = NULL
 )
 }
 \arguments{
@@ -53,6 +54,10 @@ If \code{FALSE}, uses the family-wise type I error rate.}
 
 \item{Suppress_updates}{If \code{TRUE}, blocks messages reporting the completion
 of each unique setting.}
+
+\item{emp_data}{Reference data set in matrix or data frame format (Beta
+values with CpG sites as rows, samples as columns). Ignored unless
+\code{Tissue="Custom"}.}
 }
 \value{
 A data frame with rows equal to the number of \code{n} and \code{rho_mu}
@@ -78,7 +83,11 @@ gene expression omnibus (see
 more details) and were identified by Graw, et. al. (2019). Please note that,
 due to some extreme values in this data, the Lymphoma option will
 occasionally throw a warning related to data generation. At this time, we
-recommend using one of the other tissue options.
+recommend using one of the other tissue options. Users who would like to use
+their own reference data set should set \code{Tissue="Custom"} and provide the
+data in matrix or data frame format with \code{emp_data}. Users who would like to
+take advantage of this setting are responsible for formatting this data set
+correctly.
 
 Although this function only covers 3 types of statistical tests, its worth
 noting that tests run using software packages such as limma will yield the
@@ -96,7 +105,7 @@ get_power_cont(100,10000,c(70,80,90,100),.05,c(.3,.4,.5))
 }
 \references{
 Graw, S., Henn, R., Thompson, J. A., and Koestler, D. C. (2019).
-pwrEWAS: #' A user-friendly tool for comprehensive power estimation for
+pwrEWAS: A user-friendly tool for comprehensive power estimation for
 epigenome wide association studies (EWAS). \emph{BMC Bioinformatics},
 20(1):218.
 }

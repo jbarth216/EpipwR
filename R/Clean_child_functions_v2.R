@@ -127,6 +127,31 @@ get_ab <- Vectorize(function(mu, var){
   c(a,b)
 }, vectorize.args = c("mu","var"))
 
+abfinder <- function(obj){
+  rc <- dim(obj)
+  if(rc[2] > rc[1]){warning("Number of samples (cols) larger than number of CpG
+                            sites (rows). Please ensure that the data does not
+                            need to be transposed.")}
+  mu_vals <- apply(obj,1,function(v){mean(as.numeric(v[!is.na(v)]))})
+  var_vals <- apply(obj,1,function(v){var(as.numeric(v[!is.na(v)]))})
+  ab <- t(get_ab(mu_vals,var_vals))
+
+  ###Quality Control
+
+  num_na <- apply(ab,2,function(v){length(v[is.na(v)])})
+  num_negs <- apply(ab,2,function(v){length(v[!is.na(v) & v<0])})
+  if(num_na[1]>0 | num_na[2]>0 ){warning(
+    paste0("The provided dataset produced ", num_na[1], " parameter estimate(s) with
+           NA values. These cpG sites will be ignored"))
+  }
+  if(num_negs[1]>0 | num_negs[2]>0 ){warning(
+    paste0("The provided dataset produced ", num_negs[2], " parameter estimate(s)
+           with negative values. These cpG sites will be ignored."))
+  }
+
+  ab[!is.na(ab[,1]) & !is.na(ab[,2]) & ab[,1]>=0 & ab[,2]>=0, ]
+}
+
 
 get_power_findN <- function(dm, Total, n, sig, rho_mu, rho_sd=0, ab_sets,
                             Nmax=1000, MOE=.01, Nmin=20, test="pearson",
@@ -225,10 +250,10 @@ get_power_cc_findN <- function(dm, Total, n, sig, delta_mu, delta_sd=0,
 
 gpcont_check <- function(dm, Total, n, fdr_fwer, rho_mu, rho_sd=0,
                            Tissue="Saliva", Nmax=1000, MOE=.03, test="pearson",
-                           use_fdr=TRUE, Suppress_updates=FALSE){
+                           use_fdr=TRUE, Suppress_updates=FALSE, emp_data=NULL){
   tiss <- c("Saliva", "Lymphoma", "Placenta", "Liver", "Colon", "Blood adult",
             "Blood 5 year olds",  "Blood newborns", "Cord-blood (whole blood)",
-            "Cord-blood (PBMC)", "Adult (PBMC)", "Sperm")
+            "Cord-blood (PBMC)", "Adult (PBMC)", "Sperm", "Custom")
   if(!is.numeric(dm) || length(dm)>1 || dm < 1 || floor(dm)!= dm){stop(
     "The number of significant associations (dm) must be a single positive
     integer")}
@@ -271,6 +296,9 @@ gpcont_check <- function(dm, Total, n, fdr_fwer, rho_mu, rho_sd=0,
   if(!identical(use_fdr,TRUE) && !identical(use_fdr,FALSE)){stop(
     "use_fdr must be boolean (either TRUE or FALSE)"
   )}
+  if(Tissue=="Custom" & !(is.matrix(emp_data) | is.data.frame(emp_data))){stop(
+    "emp_data must be in matrix or data frame format"
+  )}
 }
 
 gpcc_check1 <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
@@ -306,12 +334,13 @@ gpcc_check1 <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
 
 gpcc_check2 <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
                         n1_prop=0.5, Tissue="Saliva", Nmax=1000, MOE=.03,
-                        test="pooled", use_fdr=TRUE, Suppress_updates=FALSE){
+                        test="pooled", use_fdr=TRUE, Suppress_updates=FALSE,
+                        emp_data=NULL){
   n1 <- round(n*n1_prop)
   n2 <- n - n1
   tiss <- c("Saliva", "Lymphoma", "Placenta", "Liver", "Colon", "Blood adult",
             "Blood 5 year olds",  "Blood newborns", "Cord-blood (whole blood)",
-            "Cord-blood (PBMC)", "Adult (PBMC)", "Sperm")
+            "Cord-blood (PBMC)", "Adult (PBMC)", "Sperm", "Custom")
 
   if(!is.numeric(n1_prop) || length(n1_prop)>1 || n1_prop >= 1 ||
      n1_prop <= 0){stop(
@@ -342,4 +371,8 @@ gpcc_check2 <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
     "Unknown Tissue selected. Valid options are Saliva, Lymphoma, Placenta,
      Liver, Colon, Blood adult, Blood 5 year olds, Blood newborns,
      Cord-blood (whole blood), Cord-blood (PBMC), Adult (PBMC), Sperm"
-  )} }
+  )}
+  if(Tissue=="Custom" & !(is.matrix(emp_data) | is.data.frame(emp_data))){stop(
+    "emp_data must be in matrix or data frame format"
+  )}
+  }

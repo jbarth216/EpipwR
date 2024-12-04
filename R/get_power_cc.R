@@ -39,6 +39,9 @@
 #' `FALSE`, uses the family-wise type I error rate.
 #' @param Suppress_updates If `TRUE`, blocks messages reporting the completion
 #' of each unique setting.
+#' @param emp_data Reference data set in matrix or data frame format (Beta
+#' values with CpG sites as rows, samples as columns). Ignored unless
+#' `Tissue="Custom"`.
 #' @details
 #' Valid options for the `Tissue` argument are `"Saliva"`, `"Lymphoma"`,
 #' `"Placenta"`, `"Liver"`, `"Colon"`, `"Blood adult"`, `"Blood 5 year olds"`,
@@ -49,7 +52,12 @@
 #' more details) and were identified by Graw, et. al. (2019). Please note that,
 #' due to some extreme values in this data set, the Lymphoma option will
 #' occasionally throw a warning related to data generation. At this time, we
-#' recommend using one of the other tissue options.
+#' recommend using one of the other tissue options. Users who would like to use
+#' their own reference data set should set `Tissue="Custom"` and provide the
+#' data in matrix or data frame format with `emp_data`. Users who would like to
+#' take advantage of this setting are responsible for formatting this data set
+#' correctly.
+#'
 #'
 #' Unlike pwrEWAS (Graw et al., 2019), EpipwR enforces equality of precision
 #' (sum of the parameters) on the distributions of each group rather than
@@ -71,12 +79,13 @@
 #' @export
 get_power_cc <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
                          n1_prop=0.5, Tissue="Saliva", Nmax=1000, MOE=.03,
-                         test="pooled", use_fdr=TRUE, Suppress_updates=FALSE){
+                         test="pooled", use_fdr=TRUE, Suppress_updates=FALSE,
+                         emp_data=NULL){
   ##Check that inputs are valid
   gpcc_check1(dm,Total,n,fdr_fwer,delta_mu,delta_sd,n1_prop,Tissue,Nmax,MOE,
              test,use_fdr,Suppress_updates)
   gpcc_check2(dm,Total,n,fdr_fwer,delta_mu,delta_sd,n1_prop,Tissue,Nmax,MOE,
-              test,use_fdr,Suppress_updates)
+              test,use_fdr,Suppress_updates, emp_data)
 
   ###Start Power Analysis
   n <- sort(n)
@@ -89,7 +98,9 @@ get_power_cc <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
   out$N <- 0
 
   ##Suppress EH message
-  suppressMessages(ab_sets <-get_EpipwR_data(Tissue))
+  if(Tissue == "Custom"){ab_sets <- abfinder(emp_data)} else{
+    suppressMessages(ab_sets <-get_EpipwR_data(Tissue))
+  }
 
     for(i in seq_len(runs)){
       Results <- get_power_cc_findN(dm, Total, out$n[i], fdr_fwer,

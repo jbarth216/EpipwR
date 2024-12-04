@@ -17,7 +17,8 @@ get_power_cc(
   MOE = 0.03,
   test = "pooled",
   use_fdr = TRUE,
-  Suppress_updates = FALSE
+  Suppress_updates = FALSE,
+  emp_data = NULL
 )
 }
 \arguments{
@@ -58,6 +59,10 @@ variance t-test while \code{"WS"} indicates Welch's t-test.}
 
 \item{Suppress_updates}{If \code{TRUE}, blocks messages reporting the completion
 of each unique setting.}
+
+\item{emp_data}{Reference data set in matrix or data frame format (Beta
+values with CpG sites as rows, samples as columns). Ignored unless
+\code{Tissue="Custom"}.}
 }
 \value{
 A dataframe with rows equal to the number of \code{n} and \code{rho_mu}
@@ -83,7 +88,11 @@ gene expression omnibus (see
 more details) and were identified by Graw, et. al. (2019). Please note that,
 due to some extreme values in this data set, the Lymphoma option will
 occasionally throw a warning related to data generation. At this time, we
-recommend using one of the other tissue options.
+recommend using one of the other tissue options. Users who would like to use
+their own reference data set should set \code{Tissue="Custom"} and provide the
+data in matrix or data frame format with \code{emp_data}. Users who would like to
+take advantage of this setting are responsible for formatting this data set
+correctly.
 
 Unlike pwrEWAS (Graw et al., 2019), EpipwR enforces equality of precision
 (sum of the parameters) on the distributions of each group rather than
