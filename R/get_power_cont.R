@@ -39,6 +39,10 @@
 #' @param emp_data Reference data set in matrix or data frame format (Beta
 #' values with CpG sites as rows, samples as columns). Ignored unless
 #' `Tissue="Custom"`.
+#' @param phenotype_data A sample of phenotype data to be used in the power
+#' calculation(s). Accepts a vector with length > 100, although we recommend
+#' that users make this at least as large as their maximum sample size.
+#' If left blank, a normal distribution is used to generate correlations.
 #' @details
 #' Valid options for the `Tissue` argument are `"Saliva"`, `"Lymphoma"`,
 #' `"Placenta"`, `"Liver"`, `"Colon"`, `"Blood adult"`, `"Blood 5 year olds"`,
@@ -51,9 +55,11 @@
 #' occasionally throw a warning related to data generation. At this time, we
 #' recommend using one of the other tissue options. Users who would like to use
 #' their own reference data set should set `Tissue="Custom"` and provide the
-#' data in matrix or data frame format with `emp_data`. Users who would like to
-#' take advantage of this setting are responsible for formatting this data set
-#' correctly.
+#' data in matrix or data frame format with `emp_data`. Similarly, users can
+#' also now specify their own phenotype data, either from a real data set or by
+#' generating samples from a known distribution (i.e., `rt(1000,2)`). Users who
+#' would like to take advantage of either of these settings are responsible for
+#' the quality and formatting of the data provided.
 #'
 #' Although this function only covers 3 types of statistical tests, its worth
 #' noting that tests run using software packages such as limma will yield the
@@ -79,10 +85,11 @@
 #' @export
 get_power_cont <- function(dm, Total, n, fdr_fwer, rho_mu, rho_sd=0,
                            Tissue="Saliva", Nmax=1000, MOE=.03, test="pearson",
-                           use_fdr=TRUE, Suppress_updates=FALSE, emp_data=NULL){
+                           use_fdr=TRUE, Suppress_updates=FALSE, emp_data=NULL,
+                           phenotype_data=NULL){
  ##Check that all inputs are valid
  gpcont_check(dm,Total,n,fdr_fwer,rho_mu,rho_sd,Tissue,Nmax,MOE,test,use_fdr,
-              Suppress_updates, emp_data)
+              Suppress_updates, emp_data, phenotype_data)
 
   ###Start Power Analysis
   n <- sort(n)
@@ -102,7 +109,7 @@ get_power_cont <- function(dm, Total, n, fdr_fwer, rho_mu, rho_sd=0,
   for(i in seq_len(runs)){
     Results <- get_power_findN(dm, Total, out$n[i], fdr_fwer, out$rho[i],
                                rho_sd, ab_sets, Nmax, MOE, Nmin=20, test,
-                               use_fdr)
+                               use_fdr, phenotype_data)
     out$avg_power[i] <- mean(Results$power)
     out$sd_power[i] <- sd(Results$power)
     out$N[i] <- nrow(Results)

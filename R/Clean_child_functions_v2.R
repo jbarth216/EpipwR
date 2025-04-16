@@ -1,6 +1,6 @@
 #' @importFrom ExperimentHub ExperimentHub
 #' @import EpipwR.data
-#' @importFrom stats cor cor.test pbeta pnorm pt qbeta qnorm rbeta rnorm
+#' @importFrom stats cor cor.test pbeta pnorm pt qbeta qnorm rbeta rnorm quantile
 #' runif sd var
 
 
@@ -59,7 +59,7 @@ how_many_null_pvals <- function(dm, Total, sig){
   l <- min(max(l,5),Total-dm)
 }
 
-generate_non_null_pvals <- function(n, dm, par, ic, test){
+generate_non_null_pvals <- function(n, dm, par, ic, test, pd=NULL){
   ###Start by generating correlated normal samples
   Y <- rnorm(n)
   X <- rnorm(n*dm)
@@ -67,6 +67,9 @@ generate_non_null_pvals <- function(n, dm, par, ic, test){
   ##convert X1 to the selected beta distribution using percentiles
   ds <- qbeta(pnorm(X1),rep(par[,1],rep(n,dm)),rep(par[,2],rep(n,dm)))
   df <- data.frame(M = log(ds/(1-ds)),cpg = rep(seq_len(dm),rep(n,dm)))
+  if(!is.null(pd)){
+    Y <- quantile(pd, pnorm(Y), type=2)
+  }
   if(test=="pearson"){
     ##calculate correlations
     r<-as.vector(tapply(df$M,df$cpg,cor,y=Y))
@@ -155,7 +158,7 @@ abfinder <- function(obj){
 
 get_power_findN <- function(dm, Total, n, sig, rho_mu, rho_sd=0, ab_sets,
                             Nmax=1000, MOE=.01, Nmin=20, test="pearson",
-                            use_fdr=TRUE){
+                            use_fdr=TRUE, phenotype_data = NULL){
 
   #Start by generating the maximum number of parameters needed
   N <- Nmax
@@ -181,7 +184,7 @@ get_power_findN <- function(dm, Total, n, sig, rho_mu, rho_sd=0, ab_sets,
     ###Generate data and p-values for non-null tests
     rng <- ((i-1)*dm+1):(i*dm)
     par <- matrix(par1[rng,],length(rng),2)
-    p <- generate_non_null_pvals(n, dm, par, ic, test)
+    p <- generate_non_null_pvals(n, dm, par, ic, test, phenotype_data)
 
     if(use_fdr==TRUE){
       cutoff <- find_BH_cutoff(p, sig, dm, Total, l) } else{
@@ -211,7 +214,7 @@ get_power_cc_findN <- function(dm, Total, n, sig, delta_mu, delta_sd=0,
   ##Find a very conservative number of false-positive p-values required
   l <- how_many_null_pvals(dm, Total, sig)
   Collect <- data.frame(power=numeric(N),cutoff=0)
-  ##Begin loop: for each dataset, generate data and calculate power
+  ##Begin loop: for each data set, generate data and calculate power
   for(i in seq_len(N)){
     ####Establish sample sizes
     n1 <- round(n*n1_prop)
@@ -250,7 +253,8 @@ get_power_cc_findN <- function(dm, Total, n, sig, delta_mu, delta_sd=0,
 
 gpcont_check <- function(dm, Total, n, fdr_fwer, rho_mu, rho_sd=0,
                            Tissue="Saliva", Nmax=1000, MOE=.03, test="pearson",
-                           use_fdr=TRUE, Suppress_updates=FALSE, emp_data=NULL){
+                           use_fdr=TRUE, Suppress_updates=FALSE, emp_data=NULL,
+                         pd=NULL){
   tiss <- c("Saliva", "Lymphoma", "Placenta", "Liver", "Colon", "Blood adult",
             "Blood 5 year olds",  "Blood newborns", "Cord-blood (whole blood)",
             "Cord-blood (PBMC)", "Adult (PBMC)", "Sperm", "Custom")
@@ -299,6 +303,13 @@ gpcont_check <- function(dm, Total, n, fdr_fwer, rho_mu, rho_sd=0,
   if(Tissue=="Custom" & !(is.matrix(emp_data) | is.data.frame(emp_data))){stop(
     "emp_data must be in matrix or data frame format"
   )}
+  if(!is.null(pd)){
+    if(!is.vector(pd) | (is.vector(pd) & length(pd) < 100)){stop(
+      "phenotype_data must be a vector with at least 100 observations")}
+    if(is.vector(pd) & length(pd) < 200){warning(
+  "It is recommended that phenotype_data have at least 200 unique observations"
+  )}
+  }
 }
 
 gpcc_check1 <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
@@ -360,7 +371,7 @@ gpcc_check2 <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
   for (i in seq_len(length(delta_mu))){
     if(!is.numeric(delta_mu[i]) || abs(delta_mu[i]) > 1 ||
        abs(delta_mu[i]) <= 0){stop(
-         "All correlations (rho_mu) must have absolute value in (0,1]"
+         "All differences (delta_mu) must have absolute value in (0,1]"
        )}
     if(delta_mu[i] < .001 && delta_mu[i]>-.01){warning(
       "|delta_mu| < .001 will be extremely difficult to detect"
