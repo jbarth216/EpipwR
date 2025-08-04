@@ -158,7 +158,7 @@ abfinder <- function(obj){
 
 get_power_findN <- function(dm, Total, n, sig, rho_mu, rho_sd=0, ab_sets,
                             Nmax=1000, MOE=.01, Nmin=20, test="pearson",
-                            use_fdr=TRUE, phenotype_data = NULL){
+                            use_fdr=TRUE, phenotype_data = NULL, det_limit=.03){
 
   #Start by generating the maximum number of parameters needed
   N <- Nmax
@@ -170,9 +170,9 @@ get_power_findN <- function(dm, Total, n, sig, rho_mu, rho_sd=0, ab_sets,
   l <- how_many_null_pvals(dm, Total, sig)
 
   ##Set Upper/Lower bounds if rho_sd is not 0
-  if(rho_sd==0){ic<-rho_mu} else if(rho_mu>0){lb<-.03
+  if(rho_sd==0){ic<-rho_mu} else if(rho_mu>=0){lb<- det_limit
     ub <- 1} else{lb <- -1
-    ub <- -.03}
+    ub <- -1*det_limit}
   Collect <- data.frame(power=numeric(N),cutoff=0)
 
   ##Begin loop: for each dataset, generate data and calculate power
@@ -203,10 +203,11 @@ get_power_findN <- function(dm, Total, n, sig, rho_mu, rho_sd=0, ab_sets,
 }
 
 
+### Updated 07/25/2025 to include detection limit
 
 get_power_cc_findN <- function(dm, Total, n, sig, delta_mu, delta_sd=0,
                                ab_sets, test="pooled", n1_prop=0.5, Nmax=1000,
-                               MOE=.01, Nmin=20, use_fdr=TRUE){
+                               MOE=.01, Nmin=20, use_fdr=TRUE, det_limit=0){
   #Start by generating the maximum number of parameters needed
   N <- Nmax
   ab<-sample(seq_len(dim(ab_sets)[1]),dm*N,TRUE)
@@ -226,8 +227,8 @@ get_power_cc_findN <- function(dm, Total, n, sig, delta_mu, delta_sd=0,
     var <- mu*(1-mu)/(par[,1] + par[,2] + 1)
     ##FOR NOW: FINISH ONLY FOR DELTA_SD > 0
     if(delta_sd>0){
-      lb <- ifelse(delta_mu>0,0,-0.5)
-      ub <- ifelse(delta_mu>0,0.5,0)
+      lb <- ifelse(delta_mu>0,det_limit,-0.5)
+      ub <- ifelse(delta_mu>0,0.5,-1*det_limit)
       del <- rtnorm(dm,delta_mu*ifelse(delta_mu > lb & delta_mu<ub,1,-1),
                     delta_sd,lb,ub)
     } else{ del <- delta_mu}
@@ -274,14 +275,12 @@ gpcont_check <- function(dm, Total, n, fdr_fwer, rho_mu, rho_sd=0,
   if(!is.numeric(fdr_fwer) || length(fdr_fwer)>1 || fdr_fwer <= 0 ||
      fdr_fwer >= 1){stop("fdr_fwer must be a single number in (0,1)")}
   for (i in seq_len(length(rho_mu))){
-    if(!is.numeric(rho_mu[i]) || abs(rho_mu[i]) > 1 || abs(rho_mu[i]) <= 0){
-      stop("All correlations (rho_mu) must have absolute value in (0,1]")}
-    if(rho_mu[i] < .05 && rho_mu[i]>-.05){warning(
-      "|rho_mu| < .05 will be extremely difficult to detect")}
-  }
+    if(!is.numeric(rho_mu[i]) || abs(rho_mu[i]) > 1){
+      stop("All correlations (rho_mu) must have absolute value in [0,1]")}
+    if(rho_mu[i]==0 && rho_sd==0){stop("rho_mu cannot be 0 if rho_sd=0")}
   if(!is.numeric(rho_sd) || length(rho_sd)>1 || rho_sd<0){stop(
     "rho_sd must be a single non-negative number"
-  )}
+  )} }
   if(!(Tissue %in% tiss)){stop(
     "Unknown Tissue selected. Valid options are Saliva, Lymphoma, Placenta,
      Liver, Colon, Blood adult, Blood 5 year olds, Blood newborns,
@@ -310,6 +309,16 @@ gpcont_check <- function(dm, Total, n, fdr_fwer, rho_mu, rho_sd=0,
   "It is recommended that phenotype_data have at least 200 unique observations"
   )}
   }
+}
+
+### 7/25/25 - added to include det_limit
+gpcont_check_dl <- function(rho_sd=0, det_limit = .03){
+  if(!is.numeric(det_limit) || det_limit <0 || det_limit > 0.1){stop(
+    "det_limit must be a number between 0 and 0.1"
+  )}
+  if(det_limit != 0.03 & rho_sd == 0){warning(
+    "det_limit is ignored when delta_sd is set to 0"
+  )}
 }
 
 gpcc_check1 <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
@@ -345,20 +354,18 @@ gpcc_check1 <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
 
 gpcc_check2 <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
                         n1_prop=0.5, Tissue="Saliva", Nmax=1000, MOE=.03,
-                        test="pooled", use_fdr=TRUE, Suppress_updates=FALSE,
+                        test="pooled", use_fdr=TRUE, det_limit=0, Suppress_updates=FALSE,
                         emp_data=NULL){
   n1 <- round(n*n1_prop)
   n2 <- n - n1
   tiss <- c("Saliva", "Lymphoma", "Placenta", "Liver", "Colon", "Blood adult",
             "Blood 5 year olds",  "Blood newborns", "Cord-blood (whole blood)",
             "Cord-blood (PBMC)", "Adult (PBMC)", "Sperm", "Custom")
-
   if(!is.numeric(n1_prop) || length(n1_prop)>1 || n1_prop >= 1 ||
      n1_prop <= 0){stop(
        "The proportion of group 1 (n1_prop) must be a single value
        between 0 and 1"
      )}
-
   for(i in seq_len(length(n))){
     if(!is.numeric(n[i]) || n[i] < 4 || floor(n[i])!= n[i]){stop(
       "All sample sizes (n) must be positive integers greater than 3"
@@ -367,17 +374,16 @@ gpcc_check2 <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
       least 2 subjects"
     )}
   }
-
   for (i in seq_len(length(delta_mu))){
-    if(!is.numeric(delta_mu[i]) || abs(delta_mu[i]) > 1 ||
-       abs(delta_mu[i]) <= 0){stop(
-         "All differences (delta_mu) must have absolute value in (0,1]"
+    if(!is.numeric(delta_mu[i]) || abs(delta_mu[i]) >= 0.5){stop(
+         "All mean differences (delta_mu) must have absolute value < 0.5"
        )}
-    if(delta_mu[i] < .001 && delta_mu[i]>-.01){warning(
-      "|delta_mu| < .001 will be extremely difficult to detect"
+    if(delta_sd > 0 && (det_limit - abs(delta_mu[i]))/delta_sd>3){warning(
+      "det_limit is 3+ delta_sd away from some delta_mu values. This may
+      cause unstable power estimates."
     )}
+    if(delta_sd==0 & delta_mu[i]==0){stop("delta_mu cannot be 0 if delta_sd=0")}
   }
-
   if(!(Tissue %in% tiss)){stop(
     "Unknown Tissue selected. Valid options are Saliva, Lymphoma, Placenta,
      Liver, Colon, Blood adult, Blood 5 year olds, Blood newborns,
@@ -386,4 +392,15 @@ gpcc_check2 <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
   if(Tissue=="Custom" & !(is.matrix(emp_data) | is.data.frame(emp_data))){stop(
     "emp_data must be in matrix or data frame format"
   )}
-  }
+  if(!is.numeric(det_limit) || det_limit < 0 || det_limit > .05){stop(
+    "det_limit must be a number between 0 and 0.05"
+  )}
+  if(det_limit > 0 & delta_sd == 0){warning(
+    "det_limit is ignored when delta_sd is set to 0"
+  )}
+}
+
+###Added 6/23/25 for pwrE_to_EpipwR function
+uni_func <- function(sigma, dmax, lb, q){
+  dmax - qnorm(q + (1-q)*pnorm(lb/sigma))*sigma
+}

@@ -6,13 +6,15 @@
 #' @title Power Calculations for Case/Control EWAS
 #' @description
 #' Calculates power for EWAS with a binary outcome for multiple
-#' sample sizes and/or effect sizes. Data sets are only simulated for the
-#' non-null tests; p-values are generated directly for the null tests.
-#' Rather than specifying the number of data sets to calculate power, you
-#' specify the precision level (`MOE`)
+#' sample sizes and/or effect sizes based on Barth and Reynolds (2025).
+#' Data sets are only simulated for the non-null tests; p-values are generated
+#' directly for the null tests. Rather than specifying the number of data sets
+#' to calculate power, you specify the precision level (`MOE`)
 #' and a maximum number of data sets (`Nmax`). After 20 data sets, the
 #' function terminates when the desired precision level is reached or if the
-#' number of tested data sets reaches `Nmax`.
+#' number of tested data sets reaches `Nmax`. Researchers who are familiar with
+#' pwrEWAS can use \code{\link{pwrE_to_EpipwR}} to use pwrEWAS parameterization
+#' in EpipwR.
 #'
 #' @param dm Number of non-null tests.
 #' @param Total The total number of tests (null and non-null).
@@ -37,6 +39,8 @@
 #' variance t-test while `"WS"` indicates Welch's t-test.
 #' @param use_fdr If `TRUE`, uses `fdr_fwer` as the false discovery rate. If
 #' `FALSE`, uses the family-wise type I error rate.
+#' @param det_limit The minimum mean difference for the effect size
+#' distribution. ignored if `delta_sd=0`.
 #' @param Suppress_updates If `TRUE`, blocks messages reporting the completion
 #' of each unique setting.
 #' @param emp_data Reference data set in matrix or data frame format (Beta
@@ -49,7 +53,7 @@
 #' `"Adult (PBMC)"`, and `"Sperm"`. All data sets are publicly available on the
 #' gene expression omnibus (see
 #' \href{https://github.com/jbarth216/EpipwR.data}{EpipwR.data} package for
-#' more details) and were identified by Graw, et. al. (2019). Please note that,
+#' more details) and were identified by Graw, et al. (2019). Please note that,
 #' due to some extreme values in this data set, the Lymphoma option will
 #' occasionally throw a warning related to data generation. At this time, we
 #' recommend using one of the other tissue options. Users who would like to use
@@ -62,7 +66,12 @@
 #' Unlike pwrEWAS (Graw et al., 2019), EpipwR enforces equality of precision
 #' (sum of the parameters) on the distributions of each group rather than
 #' equality of variance.
-#' @references Graw, S., Henn, R., Thompson, J. A., and Koestler, D. C. (2019).
+#'
+#' @references Barth, J., and Reynolds, A. W. (2025). EpipwR: Efficient power
+#' analysis for EWAS with continuous outcomes. \emph{Bioinformatics Advances},
+#' 5(1), vbaf150.
+#'
+#' Graw, S., Henn, R., Thompson, J. A., and Koestler, D. C. (2019).
 #' pwrEWAS: A user-friendly tool for comprehensive power estimation for
 #' epigenome wide association studies (EWAS). \emph{BMC Bioinformatics},
 #' 20(1):218.
@@ -79,13 +88,13 @@
 #' @export
 get_power_cc <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
                          n1_prop=0.5, Tissue="Saliva", Nmax=1000, MOE=.03,
-                         test="pooled", use_fdr=TRUE, Suppress_updates=FALSE,
+                         test="pooled", use_fdr=TRUE, det_limit=0, Suppress_updates=FALSE,
                          emp_data=NULL){
   ##Check that inputs are valid
   gpcc_check1(dm,Total,n,fdr_fwer,delta_mu,delta_sd,n1_prop,Tissue,Nmax,MOE,
              test,use_fdr,Suppress_updates)
   gpcc_check2(dm,Total,n,fdr_fwer,delta_mu,delta_sd,n1_prop,Tissue,Nmax,MOE,
-              test,use_fdr,Suppress_updates, emp_data)
+              test,use_fdr, det_limit, Suppress_updates, emp_data)
 
   ###Start Power Analysis
   n <- sort(n)
@@ -104,8 +113,8 @@ get_power_cc <- function(dm, Total, n, fdr_fwer, delta_mu, delta_sd=0,
 
     for(i in seq_len(runs)){
       Results <- get_power_cc_findN(dm, Total, out$n[i], fdr_fwer,
-                                    out$delta[i], delta_sd, ab_sets, test,
-                                    n1_prop, Nmax, MOE, Nmin=20, use_fdr)
+                                out$delta[i], delta_sd, ab_sets, test,
+                                n1_prop, Nmax, MOE, Nmin=20, use_fdr, det_limit)
       out$avg_power[i] <- mean(Results$power)
       out$sd_power[i] <- sd(Results$power)
       out$N[i] <- nrow(Results)

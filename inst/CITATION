@@ -3,9 +3,9 @@ bibentry(
   title  = "EpipwR: Efficient Power Analysis for EWAS with Continuous
             Outcomes",
   author = c(person("Jackson","Barth"),person("Austin W.", "Reynolds")),
-  journal= "bioRxiv",
-  year   = 2024,
-  note   = "Preprint",
-  doi    = "https://doi.org/10.1101/2024.09.06.611713",
-  url    = "https://www.biorxiv.org/content/10.1101/2024.09.06.611713v1"
+  journal= "Bioinformatics Advances",
+  volume       = 5,
+  number       = 1,
+  year         = 2025,
+  doi          = "10.1093/bioadv/vbaf150",
 )

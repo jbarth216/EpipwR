@@ -16,6 +16,7 @@ get_power_cont(
   MOE = 0.03,
   test = "pearson",
   use_fdr = TRUE,
+  det_limit = 0.03,
   Suppress_updates = FALSE,
   emp_data = NULL,
   phenotype_data = NULL
@@ -53,6 +54,9 @@ for average power. This determines the stopping point of the algorithm.}
 \item{use_fdr}{If \code{TRUE}, uses \code{fdr_fwer} as the false discovery rate.
 If \code{FALSE}, uses the family-wise type I error rate.}
 
+\item{det_limit}{The minimum absolute correlation for the effect size
+distribution. Ignored if \code{rho_sd=0}.}
+
 \item{Suppress_updates}{If \code{TRUE}, blocks messages reporting the completion
 of each unique setting.}
 
@@ -71,10 +75,10 @@ combinations
 }
 \description{
 Calculates power for EWAS with a continuous outcome for multiple
-sample sizes and/or correlations. Data sets are only simulated for the
-non-null tests; p-values are generated directly for the null tests.
-Rather than specifying the number of data sets to calculate power, you
-specify the precision level (\code{MOE})
+sample sizes and/or correlations based on Barth and Reynolds (2025). Data
+sets are only simulated for the non-null tests; p-values are generated
+directly for the null tests. Rather than specifying the number of data sets
+to calculate power, you specify the precision level (\code{MOE})
 and a maximum number of data sets (\code{Nmax}). After 20 data sets, the
 function terminates when the desired precision level is reached or if the
 number of tested data sets reaches \code{Nmax}.
@@ -112,6 +116,10 @@ Any users wanting to mimic an analysis done in limma should use
 get_power_cont(100,10000,c(70,80,90,100),.05,c(.3,.4,.5))
 }
 \references{
+Barth, J., and Reynolds, A. W. (2025). EpipwR: Efficient power
+analysis for EWAS with continuous outcomes. \emph{Bioinformatics Advances},
+5(1), vbaf150.
+
 Graw, S., Henn, R., Thompson, J. A., and Koestler, D. C. (2019).
 pwrEWAS: A user-friendly tool for comprehensive power estimation for
 epigenome wide association studies (EWAS). \emph{BMC Bioinformatics},
