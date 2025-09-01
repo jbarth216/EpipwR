@@ -81,7 +81,8 @@ to calculate power, you specify the precision level (\code{MOE})
 and a maximum number of data sets (\code{Nmax}). After 20 data sets, the
 function terminates when the desired precision level is reached or if the
 number of tested data sets reaches \code{Nmax}. Researchers who are familiar with
-pwrEWAS can use \code{\link{pwrE_to_EpipwR}} to use pwrEWAS parameterizattion.
+pwrEWAS can use \code{\link{pwrE_to_EpipwR}} to use pwrEWAS parameterization
+in EpipwR.
 }
 \details{
 Valid options for the \code{Tissue} argument are \code{"Saliva"}, \code{"Lymphoma"},

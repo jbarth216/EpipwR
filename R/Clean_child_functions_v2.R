@@ -1,7 +1,8 @@
 #' @importFrom ExperimentHub ExperimentHub
 #' @import EpipwR.data
 #' @importFrom stats cor cor.test pbeta pnorm pt qbeta qnorm rbeta rnorm quantile
-#' runif sd var
+#' runif sd var uniroot
+
 
 
 generate_null_pvals <- function(Total,lim){

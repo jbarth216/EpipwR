@@ -23,7 +23,7 @@ BugReports: https://github.com/jbarth216/EpipwR
 Imports: 
     EpipwR.data,
     ExperimentHub (>= 2.10.0),
-    ggplot2    
+    ggplot2
 Depends: 
     R (>= 4.4.0)
 Roxygen: list(markdown = TRUE)

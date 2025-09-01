@@ -4,7 +4,7 @@
 \alias{pwrE_to_EpipwR}
 \title{Using pwrEWAS effect-size distributions in EpipwR}
 \usage{
-pwrE_to_EpipwR(maximal_delta, det_limit, Quantile = 0.9999)
+pwrE_to_EpipwR(maximal_delta, det_limit, quantile = 0.9999)
 }
 \arguments{
 \item{maximal_delta}{The desired 99.99th percentile (unless quantile is
@@ -41,6 +41,12 @@ such that the 99.99th percentile of a normal distribution (truncating out
 et al. (2019). Note that this function does allow users to specify quantiles
 other than 0.9999. If users wish to use this function for continuous EpipwR,
 we recommend specifying a smaller \code{quantile} (i.e., 0.95, 0.99 etc.).
+}
+\examples{
+#This example find the correct EpipwR settings for a maximal (99.99th
+#percentile) difference of 0.25 and a dectection limit of .005.
+pwrE_to_EpipwR(.25, .005)
+
 }
 \references{
 Graw, S., Henn, R., Thompson, J. A., and Koestler, D. C. (2019).

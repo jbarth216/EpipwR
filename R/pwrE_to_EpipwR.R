@@ -37,11 +37,15 @@
 #' @return A list with the calculated input values for the `get_power_cc`
 #' function.
 #'
+#' @examples
+#' #This example find the correct EpipwR settings for a maximal (99.99th
+#' #percentile) difference of 0.25 and a dectection limit of .005.
+#' pwrE_to_EpipwR(.25, .005)
 #'
 #' @export
 
 
-pwrE_to_EpipwR <- function(maximal_delta, det_limit, Quantile=.9999){
+pwrE_to_EpipwR <- function(maximal_delta, det_limit, quantile=.9999){
   if(maximal_delta > 1 | maximal_delta < 0){stop("maximal_delta must be
                                                  between 0 and 1")}
   if(det_limit < 0 | det_limit > 0.1){stop("det_limit must be
@@ -49,7 +53,7 @@ pwrE_to_EpipwR <- function(maximal_delta, det_limit, Quantile=.9999){
   if(maximal_delta<=det_limit){stop("maximal_delta must be larger than
                                     the detection limit")}
   sigma <- uniroot(uni_func,c(det_limit + .0001, 1), dmax=maximal_delta,
-                   lb=det_limit, q=Quantile,extendInt = "downX")$root
+                   lb=det_limit, q=quantile,extendInt = "downX")$root
   if(sigma <= 0){stop("This setting requires a standard deviation estimate
                       that is too small for R to recognize. Choose a larger
                       maximal_delta")}
